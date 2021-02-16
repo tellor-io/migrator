@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.1",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "chai": "^4.3.0",
+    "ethereum-waffle": "^3.2.2",
+    "ethers": "^5.0.31",
+    "hardhat": "^2.0.10"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.0",
+    "dotenv": "^8.2.0",
+    "zerion-defi-sdk": "github:zeriontech/defi-sdk"
+  }
+}
