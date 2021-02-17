@@ -5,7 +5,7 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Interfaces.sol";
 
-contract Main is TRBBalancer {
+contract Main {
     event NewAdmin(address);
 
     address public admin;
@@ -24,7 +24,6 @@ contract Main is TRBBalancer {
     }
 
     Mintable public newTRBContract;
-    ERC20 public oldTRBContract;
 
     // Address of the token owners mapped to the address of the migrator.
     // This is needed because the current TRB token can't be transfered to decrement the balances.
@@ -41,15 +40,9 @@ contract Main is TRBBalancer {
     // will need special calculations.
     TRBBalancer[] public balancers;
 
-    constructor(address _newTRBContract, address _oldTRBContract) {
+    constructor(address _newTRBContract) {
         admin = msg.sender;
         newTRBContract = Mintable(_newTRBContract);
-        oldTRBContract = ERC20(_oldTRBContract);
-
-        // Register this contract itself as a balancer.
-        // It returns the balances from the old Tellor contract.
-        // slither-disable-next-line controlled-array-length
-        balancers.push(TRBBalancer(address(this)));
     }
 
     function migratedBalance()

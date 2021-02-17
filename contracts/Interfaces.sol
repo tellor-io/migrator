@@ -2,14 +2,18 @@
 pragma solidity ^0.7.6;
 
 interface TRBBalancer {
-    function trbBalance() external view returns (uint256);
+    function trbBalanceOf(address holder) external view returns (uint256);
 }
 
 interface Mintable {
     function mint(address, uint256) external;
 }
 
-interface IUniswapV2Pair {
+interface Balancer {
+    function balanceOf(address holder) external view returns (uint256);
+}
+
+interface IUniswapV2Pair is Balancer {
     event Approval(
         address indexed owner,
         address indexed spender,
@@ -24,8 +28,6 @@ interface IUniswapV2Pair {
     function decimals() external pure returns (uint8);
 
     function totalSupply() external view returns (uint256);
-
-    function balanceOf(address owner) external view returns (uint256);
 
     function allowance(address owner, address spender)
         external
