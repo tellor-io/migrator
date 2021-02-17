@@ -14,6 +14,7 @@ contract Uniswap is DSMath, TRBBalancer {
 
     IUniswapV2Pair public pair;
 
+    // This many TRBs equal 1ETH.
     uint256 public trbPrice;
     address public admin;
 

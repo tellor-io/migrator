@@ -5,7 +5,7 @@ interface TRBBalancer {
     function trbBalance() external view returns (uint256);
 }
 
-interface Minter {
+interface Mintable {
     function mint(address, uint256) external;
 }
 

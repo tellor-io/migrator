@@ -1,12 +1,15 @@
 require("@nomiclabs/hardhat-waffle");
 require("dotenv").config();
-
+require('hardhat-dependency-compiler');
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports =
 {
+  paths: [
+    'contracts/testing/Mintable.sol',
+  ],
   networks: {
     hardhat: {
       forking: {

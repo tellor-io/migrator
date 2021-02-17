@@ -23,7 +23,7 @@ contract Main is TRBBalancer {
         _;
     }
 
-    Minter public newTRBContract;
+    Mintable public newTRBContract;
     ERC20 public oldTRBContract;
 
     // Address of the token owners mapped to the address of the migrator.
@@ -43,7 +43,7 @@ contract Main is TRBBalancer {
 
     constructor(address _newTRBContract, address _oldTRBContract) {
         admin = msg.sender;
-        newTRBContract = Minter(_newTRBContract);
+        newTRBContract = Mintable(_newTRBContract);
         oldTRBContract = ERC20(_oldTRBContract);
 
         // Register this contract itself as a balancer.
