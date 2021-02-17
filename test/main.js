@@ -3,20 +3,28 @@ const { expect } = require("chai");
 let UniPairTrbEth = "0x70258aa9830c2c84d855df1d61e12c256f6448b4"
 let trbPrice = "38582000000000000000" // This many TRBs equal 1ETH.
 
+// Small wallet with only TRB ERC20 tokens - less than 1 TRB.
+// https://app.zerion.io/0x2e3381202988d535e8185e7089f633f7c9998e83
+let wallet_Small_ERC20 = "0x2e3381202988d535e8185e7089f633f7c9998e83"
+// Big wallet with only TRB ERC20 tokens - more than 10k TRB.
+// https://app.zerion.io/0x58f5f0684c381fcfc203d77b2bba468ebb29b098
+let wallet_Big_ERC20 = "0x58f5f0684c381fcfc203d77b2bba468ebb29b098"
 
-// Small Uniswap wallet with 29 TRB(ETH is converted into TRB).
-// https://app.zerion.io/0x68e22efdcdbf59d077ff87e777b414b7ae333f0b/overview
-let wallet_Small_Uniswap = "0x68e22efdcdbf59d077ff87e777b414b7ae333f0b";
-// Big Uniswap wallet with 2246 TRB(ETH is converted into TRB).
-// https://app.zerion.io/0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8/overview
+// Small wallet with only TRB Uniswap tokens - less than 1 TRB(ETH is converted into TRB)..
+// https://app.zerion.io/0x974896e96219dd508100f2ad58921290655072ad
+let wallet_Small_Uniswap = "0x974896e96219dd508100f2ad58921290655072ad";
+// Big wallet with only TRB Uniswap tokens - more than 2k TRB(ETH is converted into TRB)..
+// https://app.zerion.io/0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8
 let wallet_Big_Uniswap = "0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8"
 
-// Small TRB wallet with 0.1276683 TRB
-// https://app.zerion.io/0x2e3381202988d535e8185e7089f633f7c9998e83/overview
-let wallet_Big = "0x2e3381202988d535e8185e7089f633f7c9998e83"
-// Big TRB wallet with 16095 TRB
-// https://app.zerion.io/0x3a05689137b23c136744799735867da74e9b9d75/overview
-let wallet_Big = "0x3a05689137b23c136744799735867da74e9b9d75"
+// Small wallet with Uniswap and TRB ERC20 tokens.
+// https://app.zerion.io/0x8ab83bdb74fc3573e7fabccf88336b162718961a
+let wallet_Small_Uniswap_and_ERC20 = "0x8ab83bdb74fc3573e7fabccf88336b162718961a";
+// Big wallet with only TRB ERC20 tokens - more than 10k TRB.
+// https://app.zerion.io/0x085fe2d13a9284828a721111612a2b69ea4db4d5
+let wallet_Big_Uniswap_and_ERC20 = "0x085fe2d13a9284828a721111612a2b69ea4db4d5"
+
+
 
 describe("All tests", function () {
 
@@ -26,7 +34,7 @@ describe("All tests", function () {
 
     {
       let actualBalance = Number(await calcUniPrice(wallet_Small_Uniswap))
-      let expBalance = Number(await uniswap.connect(wallet_Small_Uniswap).trbBalance())
+      let expBalance = Number(await uniswapBalancer.trbBalanceOf(wallet_Small_Uniswap))
 
       // This is only very small precision error 13 digits after the point.
       expect(expBalance).to.be.closeTo(actualBalance, 30000)
@@ -34,50 +42,85 @@ describe("All tests", function () {
 
     {
       let actualBalance = Number(await calcUniPrice(wallet_Big_Uniswap))
-      let expBalance = Number(await uniswap.connect(wallet_Big_Uniswap).trbBalance())
+      let expBalance = Number(await uniswapBalancer.trbBalanceOf(wallet_Big_Uniswap))
 
       // This is only very small precision error 13 digits after the point.
       expect(expBalance).to.be.closeTo(actualBalance, 30000)
     }
 
   });
-});
 
-it("Full simulated migrations", async function () {
-  balance = testee.trbBalance(wallet_Big)
+  it("Full simulated migrations", async function () {
 
-  testee.migrate
-  expect(1).to.equal(0) // Just a reminder that need to write a test for this.
-})
+    let migrate = async (addr) => {
+      let originalBalance = Number(await calcUniPrice(addr))
+      let balanceToMigrate = Number(await testee.trbBalanceOfAll(addr))
 
-it("No double migrations", async function () {
-  expect(1).to.equal(0) // Just a reminder that need to write a test for this.
-})
+      // This is only very small precision error - 12 digits after the point.
+      expect(originalBalance).to.be.closeTo(balanceToMigrate, 200000)
 
-it("View migrated totals", async function () {
-  expect(1).to.equal(0) // Just a reminder that need to write a test for this.
-})
+      await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [addr]
+      }
+      )
+      const walletOwner = await ethers.provider.getSigner(addr)
+      await testee.connect(walletOwner).migrate()
+
+      console.log('checking balance for ', addr);
+
+      let migratedBalance = Number(await newTellor.balanceOf(addr))
+      expect(migratedBalance).to.be.closeTo(originalBalance, 200000)
+    }
+
+    // await migrate(wallet_Small_ERC20)
+    // await migrate(wallet_Small_ERC20)
+
+    await migrate(wallet_Small_Uniswap)
+    await migrate(wallet_Big_Uniswap)
+
+
+    // await migrate(wallet_Small_Uniswap_and_ERC20)
+    // await migrate(wallet_Big_Uniswap_and_ERC20)
+
+  })
+
+  it("No double migrations", async function () {
+    expect(1).to.equal(0) // Just a reminder that need to write a test for this.
+  })
+
+  it("Migration only own tokens ", async function () {
+    expect(1).to.equal(0) // Just a reminder that need to write a test for this.
+  })
+
+  it("View migrated totals", async function () {
+    expect(1).to.equal(0) // Just a reminder that need to write a test for this.
+  })
 
 
 
-// `beforeEach` will run before each test, re-deploying the contract every
-// time. It receives a callback, which can be async.
-beforeEach(async function () {
-  // [owner, acc1, acc2, acc3, acc4, acc5] = await ethers.getSigners();
 
-  // TODO remove this when we have a running oracle version on mainnet and use it directly.
-  let fact = await ethers.getContractFactory("contracts/testing/Mintable.sol:Mintable");
-  mintable = await fact.deploy("Tellor Tribute", "TRB");
-  await mintable.deployed();
 
-  fact = await ethers.getContractFactory("Main");
-  testee = await fact.deploy(mintable.address, "0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5");
-  await testee.deployed();
+  // `beforeEach` will run before each test, re-deploying the contract every
+  // time. It receives a callback, which can be async.
+  beforeEach(async function () {
 
-  fact = await ethers.getContractFactory("Uniswap");
-  uniswap = await fact.deploy(UniPairTrbEth, trbPrice);
-  await uniswap.deployed();
+    // TODO remove this when we have a running oracle version on mainnet and use it directly.
+    let fact = await ethers.getContractFactory("contracts/testing/Mintable.sol:Mintable");
+    newTellor = await fact.deploy("Tellor Tribute", "TRB");
+    await newTellor.deployed();
 
+    fact = await ethers.getContractFactory("Main");
+    testee = await fact.deploy(newTellor.address);
+    await testee.deployed();
+
+    fact = await ethers.getContractFactory("Uniswap");
+    uniswapBalancer = await fact.deploy(UniPairTrbEth, trbPrice);
+    await uniswapBalancer.deployed();
+
+    await testee.addBalancer(uniswapBalancer.address)
+
+  });
 });
 
 let calcUniPrice = async (addr) => {
