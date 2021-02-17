@@ -40,8 +40,13 @@ contract Uniswap is DSMath, TRBBalancer {
         emit NewTRBPrice(_trbPrice);
     }
 
-    function trbBalance() external view override returns (uint256) {
-        uint256 userBalance = pair.balanceOf(msg.sender);
+    function trbBalanceOf(address holder)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        uint256 userBalance = pair.balanceOf(holder);
         uint256 totalSupply = pair.totalSupply();
         uint256 poolShare = wdiv(userBalance, totalSupply);
 

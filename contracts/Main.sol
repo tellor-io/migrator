@@ -15,12 +15,12 @@ contract Main {
         _;
     }
 
-    modifier migrateNotDone() {
-        require(
-            migrDone[msg.sender] == address(0),
-            "migration for this contract and token owner already done"
-        );
-        _;
+    function migrated(address holder, address protocol)
+        public
+        view
+        returns (bool)
+    {
+        return migrDone[holder][protocol];
     }
 
     Mintable public newTRBContract;
@@ -29,7 +29,8 @@ contract Main {
     // This is needed because the current TRB token can't be transfered to decrement the balances.
     // This mapping tracks completed migrations and ensured that
     // the owner doesn't migrate the same amount multiple times.
-    mapping(address => address) public migrDone;
+    // mapping is tokenOwner => protocol;
+    mapping(address => mapping(address => bool)) public migrDone;
     mapping(address => uint256) public migrAmount;
 
     // trbBalancers return the balance in TRB of a token owner.
@@ -45,24 +46,32 @@ contract Main {
         newTRBContract = Mintable(_newTRBContract);
     }
 
-    function migratedBalance()
-        external
-        view
-        migrateNotDone()
-        returns (uint256)
-    {
+    function migratedBalance() external view returns (uint256) {
         return migrAmount[msg.sender];
     }
 
     // slither-disable-next-line calls-loop missing-zero-check controlled-array-length
-    function migrate() external migrateNotDone() {
+    function migrate() external {
         require(balancers.length > 0, "no registered balancers");
 
         uint256 totalBalance = 0;
         for (uint256 index = 0; index < balancers.length; index++) {
-            migrDone[msg.sender] = address(balancers[index]);
-            totalBalance += balancers[index].trbBalance();
+            address contractAddr = address(balancers[index]);
+
+            if (!migrated(msg.sender, contractAddr)) {
+                migrDone[msg.sender][contractAddr] = true;
+                totalBalance += balancers[index].trbBalanceOf(msg.sender);
+
+                console.log(
+                    "balancers[index].trbBalanceOf(msg.sender)",
+                    balancers[index].trbBalanceOf(msg.sender),
+                    msg.sender
+                );
+            }
         }
+
+        console.log("migrating", totalBalance, msg.sender);
+
         require(totalBalance > 0, "no balance to transfer");
 
         migrAmount[msg.sender] = totalBalance;
@@ -92,10 +101,18 @@ contract Main {
         }
     }
 
-    function trbBalance() external view override returns (uint256) {
-        console.log("oldTRBContract", address(oldTRBContract));
-        console.log("msg.sender", msg.sender);
+    function trbBalanceOfAll(address holder) external view returns (uint256) {
+        uint256 totalBalance = 0;
+        for (uint256 index = 0; index < balancers.length; index++) {
+            console.log(
+                "adding balance",
+                index,
+                balancers[index].trbBalanceOf(holder),
+                holder
+            );
 
-        return oldTRBContract.balanceOf(msg.sender);
+            totalBalance += balancers[index].trbBalanceOf(holder);
+        }
+        return totalBalance;
     }
 }
