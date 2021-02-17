@@ -106,7 +106,7 @@ describe("All tests", function () {
   beforeEach(async function () {
 
     // TODO remove this when we have a running oracle version on mainnet and use it directly.
-    let fact = await ethers.getContractFactory("contracts/testing/Mintable.sol:Mintable");
+    let fact = await ethers.getContractFactory("contracts/testing/Token.sol:Token");
     newTellor = await fact.deploy("Tellor Tribute", "TRB");
     await newTellor.deployed();
 

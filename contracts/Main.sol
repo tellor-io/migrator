@@ -50,7 +50,6 @@ contract Main {
         return migrAmount[msg.sender];
     }
 
-    // slither-disable-next-line calls-loop missing-zero-check controlled-array-length
     function migrate() external {
         require(balancers.length > 0, "no registered balancers");
 
@@ -60,13 +59,8 @@ contract Main {
 
             if (!migrated(msg.sender, contractAddr)) {
                 migrDone[msg.sender][contractAddr] = true;
+                // slither-disable-next-line calls-loop
                 totalBalance += balancers[index].trbBalanceOf(msg.sender);
-
-                console.log(
-                    "balancers[index].trbBalanceOf(msg.sender)",
-                    balancers[index].trbBalanceOf(msg.sender),
-                    msg.sender
-                );
             }
         }
 
@@ -79,8 +73,11 @@ contract Main {
         newTRBContract.mint(msg.sender, totalBalance);
     }
 
-    //slither-disable-next-line missing-zero-check
     function setAdmin(address _admin) public onlyAdmin {
+        require(
+            _admin != address(0),
+            "shouldn't set admin to the zero address"
+        );
         admin = _admin;
         emit NewAdmin(_admin);
     }
@@ -104,13 +101,7 @@ contract Main {
     function trbBalanceOfAll(address holder) external view returns (uint256) {
         uint256 totalBalance = 0;
         for (uint256 index = 0; index < balancers.length; index++) {
-            console.log(
-                "adding balance",
-                index,
-                balancers[index].trbBalanceOf(holder),
-                holder
-            );
-
+            // slither-disable-next-line calls-loop
             totalBalance += balancers[index].trbBalanceOf(holder);
         }
         return totalBalance;

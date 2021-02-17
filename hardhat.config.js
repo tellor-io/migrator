@@ -8,7 +8,7 @@ require('hardhat-dependency-compiler');
 module.exports =
 {
   paths: [
-    'contracts/testing/Mintable.sol',
+    'contracts/testing/Token.sol',
   ],
   networks: {
     hardhat: {

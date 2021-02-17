@@ -2,16 +2,17 @@
 
 pragma solidity ^0.7.6;
 
+import "../Interfaces.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // The contract is also an ERC20 token which holds the collateral currency.
 // It also holds the semi stable token state inside the `token` variable.
-contract Mintable is ERC20 {
+contract Token is ERC20, Mintable {
     function burn(address account, uint256 amount) external {
         _burn(account, amount);
     }
 
-    function mint(address account, uint256 amount) external {
+    function mint(address account, uint256 amount) external override {
         _mint(account, amount);
     }
 
