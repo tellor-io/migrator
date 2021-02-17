@@ -31,6 +31,7 @@ contract Main is TRBBalancer {
     // This mapping tracks completed migrations and ensured that
     // the owner doesn't migrate the same amount multiple times.
     mapping(address => address) public migrDone;
+    mapping(address => uint256) public migrAmount;
 
     // trbBalancers return the balance in TRB of a token owner.
     // Each balancer in the list is a separate implementation for a given protocol - Uniswap, Balancer etc.
@@ -51,6 +52,15 @@ contract Main is TRBBalancer {
         balancers.push(TRBBalancer(address(this)));
     }
 
+    function migratedBalance()
+        external
+        view
+        migrateNotDone()
+        returns (uint256)
+    {
+        return migrAmount[msg.sender];
+    }
+
     // slither-disable-next-line calls-loop missing-zero-check controlled-array-length
     function migrate() external migrateNotDone() {
         require(balancers.length > 0, "no registered balancers");
@@ -61,6 +71,8 @@ contract Main is TRBBalancer {
             totalBalance += balancers[index].trbBalance();
         }
         require(totalBalance > 0, "no balance to transfer");
+
+        migrAmount[msg.sender] = totalBalance;
 
         newTRBContract.mint(msg.sender, totalBalance);
     }
