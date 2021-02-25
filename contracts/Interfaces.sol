@@ -11,6 +11,10 @@ interface Mintable {
     function mint(address, uint256) external;
 }
 
+interface Owned {
+    function owner() external returns (address);
+}
+
 interface Balancer {
     function balanceOf(address holder) external view returns (uint256);
 }
