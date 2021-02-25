@@ -1,8 +1,10 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.0;
 
 interface TRBBalancer {
     function trbBalanceOf(address holder) external view returns (uint256);
+
+    function burn(address holder) external returns (bool);
 }
 
 interface Mintable {

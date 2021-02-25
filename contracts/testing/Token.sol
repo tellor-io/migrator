@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.0;
 
 import "../Interfaces.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 // The contract is also an ERC20 token which holds the collateral currency.
 // It also holds the semi stable token state inside the `token` variable.

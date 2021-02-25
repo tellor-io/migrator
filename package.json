@@ -11,6 +11,7 @@
     "@openzeppelin/contracts": "^3.4.0",
     "dotenv": "^8.2.0",
     "hardhat-dependency-compiler": "^1.0.2",
+    "openzeppelin-solidity": "github:OpenZeppelin/openzeppelin-contracts",
     "zerion-defi-sdk": "github:zeriontech/defi-sdk"
   }
 }
