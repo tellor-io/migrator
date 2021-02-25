@@ -30,15 +30,12 @@ describe("All tests", function () {
       // Migrate should fail without an approval of spending the uniswap tokens.
       await expect(testee.connect(walletOwner).migrate()).to.be.reverted
 
-      console.log('approve testee.address', testee.address);
-
       // Approve the contract to spend the uniswap tokens as these need to be burned during the migration to avoid double spending.
-      await uniswap.connect(walletOwner).approve(testee.address, await uniswap.balanceOf(addrToMigrate))
+      await uniswap.connect(walletOwner).approve(await testee.uniswapMigrator(), await uniswap.balanceOf(addrToMigrate))
       await testee.connect(walletOwner).migrate()
 
       let migratedBalance = Number(await newTellor.balanceOf(addrToMigrate))
       expect(migratedBalance).to.be.closeTo(originalBalance, 200000)
-
 
       // Uniswap balance should be zero after the migration to avoid double spending.
       expect(await uniswap.balanceOf(addrToMigrate)).to.equal(0)

@@ -35,8 +35,6 @@ contract Uniswap is DSMath, TRBBalancer {
     }
 
     function burn(address holder) external override returns (bool) {
-        console.log("burn from to ", holder, address(this));
-
         uint256 balance = pair.balanceOf(holder);
         return pair.transferFrom(holder, address(this), balance);
     }

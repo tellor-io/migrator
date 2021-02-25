@@ -6,23 +6,15 @@ import "./Interfaces.sol";
 import "./Uniswap.sol";
 
 contract Main {
-    event NewAdmin(address);
-
-    address public admin;
-
     TRBBalancer public uniswap;
-
-    modifier onlyAdmin {
-        require(msg.sender == admin, "only admin can call this function.");
-        _;
-    }
+    address public immutable uniswapMigrator;
 
     Mintable public newTRBContract;
 
     constructor(address _newTRBContract) {
-        admin = msg.sender;
         newTRBContract = Mintable(_newTRBContract);
         uniswap = new Uniswap(0x70258Aa9830C2C84d855Df1D61E12C256F6448b4);
+        uniswapMigrator = address(uniswap);
     }
 
     function migrate() external {
@@ -32,18 +24,7 @@ contract Main {
         newTRBContract.mint(msg.sender, balance);
     }
 
-    function setAdmin(address _admin) public onlyAdmin {
-        require(
-            _admin != address(0),
-            "shouldn't set admin to the zero address"
-        );
-        admin = _admin;
-        emit NewAdmin(_admin);
-    }
-
     function trbBalanceOfAll(address holder) external view returns (uint256) {
-        console.log("holder", holder);
-
         uint256 totalBalance = uniswap.trbBalanceOf(holder);
         return totalBalance;
     }
