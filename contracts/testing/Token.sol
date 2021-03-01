@@ -8,6 +8,8 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 // The contract is also an ERC20 token which holds the collateral currency.
 // It also holds the semi stable token state inside the `token` variable.
 contract Token is ERC20, Mintable {
+    address admin;
+
     function burn(address account, uint256 amount) external {
         _burn(account, amount);
     }
@@ -28,7 +30,7 @@ contract Token is ERC20, Mintable {
         address _destination,
         uint256 _amount
     ) external {
-        require(msg.sender == addresses[_MIGRATOR], "not allowed");
+        require(msg.sender == admin, "not allowed");
         require(!migrated[_origin], "alredy migrated");
         _mint(_destination, _amount);
         migrated[_origin] = true;
@@ -41,12 +43,14 @@ contract Token is ERC20, Mintable {
      * @param _amount iis the amount to mint to the user
      */
     function migrateAddress(address _destination, uint256 _amount) external {
-        require(msg.sender == addresses[_MIGRATOR], "not allowed");
+        require(msg.sender == admin, "not allowed");
         require(!migrated[_destination], "alredy migrated");
         _mint(_destination, _amount);
         migrated[_destination] = true;
     }
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(string memory n, string memory s) ERC20(n, s) {}
+    constructor(string memory n, string memory s) ERC20(n, s) {
+        admin = msg.sender;
+    }
 }
