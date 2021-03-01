@@ -15,35 +15,31 @@ contract Main {
     Balancer public oldTellorContract =
         Balancer(0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5);
 
-    mapping(Owned => bool) public singleOwnerStakingContracts;
+    mapping(Owned => bool) public allowToMigrate;
     mapping(address => bool) public migratedContracts;
 
     Mintable public newTRBContract;
 
     constructor(address _newTRBContract) {
         admin = msg.sender;
-
+        // TODO hard code the address onse the new tallor contract enables minting from this contract.
         newTRBContract = Mintable(_newTRBContract);
+        oldTellorContract = Balancer(
+            0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5
+        );
         uniswap = new Uniswap(0x70258Aa9830C2C84d855Df1D61E12C256F6448b4); // The uniswap TRB/ETH pool
         uniswapMigrator = address(uniswap);
 
-        singleOwnerStakingContracts[
-            Owned(0x01fc3e9Bfc62ae9370694f968E33713F792C78cF)
-        ] = true;
+        // Migrate some during the initialization.
+        _migrateContract(0x01fc3e9Bfc62ae9370694f968E33713F792C78cF);
     }
 
-    function addSingleOwnerStakingContracts(address _contract)
-        external
-        onlyAdmin
-    {
-        singleOwnerStakingContracts[Owned(_contract)] = true;
+    function addAllowToMigrate(address _contract) external onlyAdmin {
+        allowToMigrate[Owned(_contract)] = true;
     }
 
-    function deleteSingleOwnerStakingContracts(address _contract)
-        external
-        onlyAdmin
-    {
-        delete singleOwnerStakingContracts[Owned(_contract)];
+    function deleteAllowToMigrate(address _contract) external onlyAdmin {
+        delete allowToMigrate[Owned(_contract)];
     }
 
     function migrateUniswap() external {
@@ -53,23 +49,28 @@ contract Main {
         newTRBContract.mint(msg.sender, balance);
     }
 
-    function migrateContract(address owner) external {
-        require(!migratedContracts[owner], "contract already migrated");
+    function migrateContract(address _contract) public {
+        require(!migratedContracts[_contract], "contract already migrated");
         require(
-            singleOwnerStakingContracts[Owned(owner)],
-            "This is not a white listed staking contract"
+            allowToMigrate[Owned(_contract)],
+            "contract not white listed for migration"
         );
-        migratedContracts[owner] = true;
 
-        address contractOwner = Owned(owner).owner();
+        address _owner = Owned(_contract).owner();
         require(
-            contractOwner == msg.sender,
+            _owner == msg.sender,
             "only the contract owner can run the migration"
         );
 
-        uint256 balance = oldTellorContract.balanceOf(owner);
+        _migrateContract(_contract);
+    }
+
+    function _migrateContract(address _contract) internal {
+        address _owner = Owned(_contract).owner();
+        migratedContracts[_contract] = true;
+        uint256 balance = oldTellorContract.balanceOf(_contract);
         require(balance > 0, "no balance to migrate");
-        newTRBContract.mint(contractOwner, balance);
+        newTRBContract.mint(_owner, balance);
     }
 
     function trbBalanceOfUniswap(address holder)
