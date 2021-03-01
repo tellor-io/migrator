@@ -21,7 +21,8 @@ contract Main {
 
     constructor(address _newTRBContract) {
         admin = msg.sender;
-        newTRBContract = Mintable(0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0);
+        // newTRBContract = Mintable(0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0);
+        newTRBContract = Mintable(_newTRBContract);
 
         oldTellorContract = Balancer(
             0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5
@@ -33,7 +34,10 @@ contract Main {
         // Migrate some during the initialization.
 
         // The contract owner is public so funds will be sent firectly to its address.
-        _migrateAddress(0x01fc3e9Bfc62ae9370694f968E33713F792C78cF);
+        _migrateContractTo(
+            0x01fc3e9Bfc62ae9370694f968E33713F792C78cF,
+            0xA4b85427D108d28D385bed1c1c8F27384F62EBD8
+        );
 
         // Owner confirmed through this transaction.
         // https://etherscan.io/tx/0x99c88123cfe60fe9b0f2aee79ad300eca6e5ce3d628b728d624935ab869e7050

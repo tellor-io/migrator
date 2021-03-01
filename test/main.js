@@ -88,13 +88,14 @@ describe("All tests", function () {
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
       const contractOwner = await ownedContract.owner()
 
-      await testee.migrateContract(contractAddr)
+      const accounts = await ethers.getSigners();
+      await testee.connect(accounts[0]).migrateContractTo(contractAddr, contractOwner)
 
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
 
       // Second migration should revert.
-      await expect(testee.migrateContract(contractAddr)).to.be.reverted
+      await expect(testee.migrateContractTo(contractAddr,contractOwner)).to.be.reverted
     }
 
     let migrateNonAdmin = async (contractAddr) => {
@@ -105,13 +106,36 @@ describe("All tests", function () {
       })
 
       const walletOwner = await ethers.provider.getSigner(contractOwner)
-      await expect(testee.connect(walletOwner).migrateContract(contractAddr)).to.be.reverted
+      await expect(testee.connect(walletOwner).migrateAddress(contractAddr)).to.be.reverted
     }
 
     let wallets = ["0x0C9411796D09f6Fe48B28D2271CB9D609AD951B3", "0xBCED67c5538Cd284410CC340954167A84449a25E", "0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29"]
 
     await Promise.all(wallets.map(async (contractAddr) => {
       await migrateNonAdmin(contractAddr)
+      await migrateOk(contractAddr)
+    }));
+
+  })
+
+  it("Migrate address migrations", async function () {
+    const olsTellorInstance = await ethers.getContractAt("contracts/Interfaces.sol:Balancer", olsTellorContract)
+
+    let migrateOk = async (contractAddr) => {
+      let balanceToMigrate = Number(await olsTellorInstance.balanceOf(contractAddr))
+      const accounts = await ethers.getSigners();
+      await testee.connect(accounts[0]).migrateAddress(contractAddr)
+
+      let migratedBalance = Number(await newTellor.balanceOf(contractAddr))
+      expect(migratedBalance).to.equal(balanceToMigrate)
+
+      // Second migration should revert.
+      await expect(testee.migrateAddress(contractAddr)).to.be.reverted
+    }
+
+    let wallets = ["0x0C9411796D09f6Fe48B28D2271CB9D609AD951B3", "0xBCED67c5538Cd284410CC340954167A84449a25E", "0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29"]
+
+    await Promise.all(wallets.map(async (contractAddr) => {
       await migrateOk(contractAddr)
     }));
 
