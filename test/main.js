@@ -57,22 +57,29 @@ describe("All tests", function () {
     await expect(testee.connect(walletOwner).migrateUniswap()).to.be.reverted
   })
 
-  it("Contructor contract migrations", async function () {
+  it("Constructor contract migrations", async function () {
     const olsTellorInstance = await ethers.getContractAt("contracts/Interfaces.sol:Balancer", olsTellorContract)
 
     let checkMigrated = async (contractAddr) => {
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
       const contractOwner = await ownedContract.owner()
 
+      await checkMigratedTo(contractAddr, contractOwner)
+    }
+
+    let checkMigratedTo = async (contractAddr, contractOwner) => {
       let balanceToMigrate = Number(await olsTellorInstance.balanceOf(contractAddr))
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
     }
 
     await checkMigrated("0x01fc3e9Bfc62ae9370694f968E33713F792C78cF")
+    await checkMigratedTo("0xfDc6Fdb071A116714E1f73186339d9fA1623867F", "0xb17DB53E5519f804F48A11740793487296751236")
+    await checkMigratedTo("0xDbC1b60fDd000F645B668d8026A28C26772A151c", "0x0957756646c5e808005dbF7970778c4AE5E80aEB")
+    await checkMigratedTo("0x0966AEb41F4a94aAB7FB595A22CAa7b64ce73aA2", "0xD4DA002e714a7341a7d0fB1899F8260508E42653")
   })
 
-  it("White listed contract migrations", async function () {
+  it("Manual contract migrations", async function () {
     const olsTellorInstance = await ethers.getContractAt("contracts/Interfaces.sol:Balancer", olsTellorContract)
 
     let migrateOk = async (contractAddr) => {
@@ -80,26 +87,18 @@ describe("All tests", function () {
 
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
       const contractOwner = await ownedContract.owner()
-      await hre.network.provider.request({
-        method: "hardhat_impersonateAccount",
-        params: [contractOwner]
-      })
 
-      const walletOwner = await ethers.provider.getSigner(contractOwner)
-
-      await testee.connect(walletOwner).migrateContract(contractAddr)
+      await testee.migrateContract(contractAddr)
 
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
 
       // Second migration should revert.
-      await expect(testee.connect(walletOwner).migrateContract(contractAddr)).to.be.reverted
+      await expect(testee.migrateContract(contractAddr)).to.be.reverted
     }
 
-    let migrateNonWhiteListed = async (contractAddr) => {
-      const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
-      const contractOwner = await ownedContract.owner()
-
+    let migrateNonAdmin = async (contractAddr) => {
+      contractOwner = "0x54d13ec47eda7189983c68a67e8498f0e755c859"
       await hre.network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [contractOwner]
@@ -109,24 +108,12 @@ describe("All tests", function () {
       await expect(testee.connect(walletOwner).migrateContract(contractAddr)).to.be.reverted
     }
 
-    let migrateNonOwner = async (contractAddr, contractOwner) => {
-      await hre.network.provider.request({
-        method: "hardhat_impersonateAccount",
-        params: [contractOwner]
-      })
+    let wallets = ["0x0C9411796D09f6Fe48B28D2271CB9D609AD951B3", "0xBCED67c5538Cd284410CC340954167A84449a25E", "0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29"]
 
-      const walletOwner = await ethers.provider.getSigner(contractOwner)
-      await expect(testee.connect(walletOwner).migrateContract(contractAddr)).to.be.reverted
-    }
-
-    let whiteListed = ["0x01fc3e9Bfc62ae9370694f968E33713F792C78cF", "0xBCED67c5538Cd284410CC340954167A84449a25E", "0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29"]
-
-    await Promise.all(whiteListed.map(async (contractAddr) => {
+    await Promise.all(wallets.map(async (contractAddr) => {
+      await migrateNonAdmin(contractAddr)
       await migrateOk(contractAddr)
-      await migrateNonOwner(contractAddr, "0x54d13ec47eda7189983c68a67e8498f0e755c859")
     }));
-
-    await migrateNonWhiteListed("0xbe0eb53f46cd790cd13851d5eff43d12404d33e8", "0xa4b85427d108d28d385bed1c1c8f27384f62ebd8")
 
   })
 

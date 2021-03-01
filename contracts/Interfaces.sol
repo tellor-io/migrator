@@ -12,7 +12,7 @@ interface Mintable {
 }
 
 interface Owned {
-    function owner() external returns (address);
+    function owner() external view returns (address);
 }
 
 interface Balancer {

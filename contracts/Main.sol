@@ -15,7 +15,6 @@ contract Main {
     Balancer public oldTellorContract =
         Balancer(0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5);
 
-    mapping(Owned => bool) public allowToMigrate;
     mapping(address => bool) public migratedContracts;
 
     Mintable public newTRBContract;
@@ -31,15 +30,29 @@ contract Main {
         uniswapMigrator = address(uniswap);
 
         // Migrate some during the initialization.
-        _migrateContract(0x01fc3e9Bfc62ae9370694f968E33713F792C78cF);
-    }
 
-    function addAllowToMigrate(address _contract) external onlyAdmin {
-        allowToMigrate[Owned(_contract)] = true;
-    }
+        // The contract owner is public so funds will be sent firectly to its address.
+        migrateContract(0x01fc3e9Bfc62ae9370694f968E33713F792C78cF);
 
-    function deleteAllowToMigrate(address _contract) external onlyAdmin {
-        delete allowToMigrate[Owned(_contract)];
+        // Owner confirmed through this transaction.
+        // https://etherscan.io/tx/0x99c88123cfe60fe9b0f2aee79ad300eca6e5ce3d628b728d624935ab869e7050
+        migrateContractTo(
+            0xfDc6Fdb071A116714E1f73186339d9fA1623867F,
+            0xb17DB53E5519f804F48A11740793487296751236
+        );
+        // Owner confirmed through this transaction.
+        // https://etherscan.io/tx/0x17c22fc7fb568ac3591343e5b766bec0fb21d3dea24d7c72e1fb91624cfcc02e
+        migrateContractTo(
+            0xDbC1b60fDd000F645B668d8026A28C26772A151c,
+            0x0957756646c5e808005dbF7970778c4AE5E80aEB
+        );
+
+        // Owner confirmed through this transaction.
+        // https://etherscan.io/tx/0xd9c013cc43f95974726b42408dbdb998919262a9f862adaeb60b76cb3c25677f
+        migrateContractTo(
+            0x0966AEb41F4a94aAB7FB595A22CAa7b64ce73aA2,
+            0xD4DA002e714a7341a7d0fB1899F8260508E42653
+        );
     }
 
     function migrateUniswap() external {
@@ -49,27 +62,22 @@ contract Main {
         newTRBContract.mint(msg.sender, balance);
     }
 
-    function migrateContract(address _contract) public {
-        require(!migratedContracts[_contract], "contract already migrated");
-        require(
-            allowToMigrate[Owned(_contract)],
-            "contract not white listed for migration"
-        );
-
+    // Helper function for contracts with public admin to
+    // send the funds directly to its address.
+    function migrateContract(address _contract) public onlyAdmin {
         address _owner = Owned(_contract).owner();
-        require(
-            _owner == msg.sender,
-            "only the contract owner can run the migration"
-        );
-
-        _migrateContract(_contract);
+        migrateContractTo(_contract, _owner);
     }
 
-    function _migrateContract(address _contract) internal {
-        address _owner = Owned(_contract).owner();
-        migratedContracts[_contract] = true;
+    function migrateContractTo(address _contract, address _owner)
+        public
+        onlyAdmin
+    {
+        require(!migratedContracts[_contract], "contract already migrated");
         uint256 balance = oldTellorContract.balanceOf(_contract);
         require(balance > 0, "no balance to migrate");
+
+        migratedContracts[_contract] = true;
         newTRBContract.mint(_owner, balance);
     }
 
