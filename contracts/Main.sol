@@ -61,7 +61,7 @@ contract Main {
         uint256 balance = uniswap.trbBalanceOf(msg.sender);
         require(balance > 0, "no balance to migrate");
         require(uniswap.burn(msg.sender), "burn failed");
-        newTRBContract.mint(msg.sender, balance);
+        newTRBContract.migrateAddress(msg.sender, balance);
     }
 
     //slither-disable-next-line unimplemented-functions
@@ -72,9 +72,15 @@ contract Main {
         _migrateContractTo(_contract, _owner);
     }
 
-    function migrateContractToBatch([]address calldata _contracts,  []address calldata _owners) public onlyAdmin {
-        require(_contracts.length == _owners.length, "mismatching array inputs");
-        for (uint256 index = 0; index < array.length; index++) {
+    function migrateContractToBatch(
+        address[] calldata _contracts,
+        address[] calldata _owners
+    ) public onlyAdmin {
+        require(
+            _contracts.length == _owners.length,
+            "mismatching array inputs"
+        );
+        for (uint256 index = 0; index < _owners.length; index++) {
             _migrateContractTo(_contracts[index], _owners[index]);
         }
     }
@@ -93,8 +99,8 @@ contract Main {
         _migrateAddress(_owner);
     }
 
-    function migrateAddressBatch([]address calldata _owners) public onlyAdmin {
-        for (uint256 index = 0; index < array.length; index++) {
+    function migrateAddressBatch(address[] calldata _owners) public onlyAdmin {
+        for (uint256 index = 0; index < _owners.length; index++) {
             _migrateAddress(_owners[index]);
         }
     }
@@ -135,6 +141,10 @@ contract Main {
     function rescueToken(address _token) external onlyAdmin {
         require(_token != address(newTRBContract), "not allowed to rescue");
         // Using IUniswappair because it already contains the transfer interface
-        require(IUniswapV2Pair(_token).transfer(admin), "token transfer failed");
+        uint256 balance = IUniswapV2Pair(_token).balanceOf(address(this));
+        require(
+            IUniswapV2Pair(_token).transfer(admin, balance),
+            "token transfer failed"
+        );
     }
 }

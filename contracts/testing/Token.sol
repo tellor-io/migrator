@@ -9,13 +9,10 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 // It also holds the semi stable token state inside the `token` variable.
 contract Token is ERC20, Mintable {
     address admin;
+    mapping(address => bool) public migrated;
 
     function burn(address account, uint256 amount) external {
         _burn(account, amount);
-    }
-
-    function mint(address account, uint256 amount) external override {
-        _mint(account, amount);
     }
 
     /**
@@ -29,7 +26,7 @@ contract Token is ERC20, Mintable {
         address _origin,
         address _destination,
         uint256 _amount
-    ) external {
+    ) external override {
         require(msg.sender == admin, "not allowed");
         require(!migrated[_origin], "alredy migrated");
         _mint(_destination, _amount);
@@ -42,7 +39,10 @@ contract Token is ERC20, Mintable {
      * @param _destination is the address that will receive tokens
      * @param _amount iis the amount to mint to the user
      */
-    function migrateAddress(address _destination, uint256 _amount) external {
+    function migrateAddress(address _destination, uint256 _amount)
+        external
+        override
+    {
         require(msg.sender == admin, "not allowed");
         require(!migrated[_destination], "alredy migrated");
         _mint(_destination, _amount);
