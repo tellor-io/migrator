@@ -8,8 +8,12 @@ interface TRBBalancer {
 }
 
 interface Mintable {
-    function mint(address, uint256) external;
-}
+    function migrateContract(
+        address _origin,
+        address _destination,
+        uint256 _amount
+    ) external ;
+    function migrateAddress(address _destination, uint256 _amount) external;
 
 interface Owned {
     function owner() external view returns (address);

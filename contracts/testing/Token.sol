@@ -16,6 +16,37 @@ contract Token is ERC20, Mintable {
         _mint(account, amount);
     }
 
+    /**
+     * @dev This is an internal function used by the function migrate  that helps to
+     *  swap old trb tokens for new ones based on the user's old Tellor balance
+     * @param _origin is the address of the user to migrate the balance from
+     * @param _destination is the address that will receive tokens
+     * @param _amount iis the amount to mint to the user
+     */
+    function migrateContract(
+        address _origin,
+        address _destination,
+        uint256 _amount
+    ) external {
+        require(msg.sender == addresses[_MIGRATOR], "not allowed");
+        require(!migrated[_origin], "alredy migrated");
+        _mint(_destination, _amount);
+        migrated[_origin] = true;
+    }
+
+    /**
+     * @dev This is an internal function used by the function migrate  that helps to
+     *  swap old trb tokens for new ones based on the user's old Tellor balance
+     * @param _destination is the address that will receive tokens
+     * @param _amount iis the amount to mint to the user
+     */
+    function migrateAddress(address _destination, uint256 _amount) external {
+        require(msg.sender == addresses[_MIGRATOR], "not allowed");
+        require(!migrated[_destination], "alredy migrated");
+        _mint(_destination, _amount);
+        migrated[_destination] = true;
+    }
+
     // solhint-disable-next-line no-empty-blocks
     constructor(string memory n, string memory s) ERC20(n, s) {}
 }
