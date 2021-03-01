@@ -10,10 +10,10 @@ contract Main {
     address public admin;
 
     TRBBalancer public uniswap;
+    //slither-disable-next-line constable-states
     address public immutable uniswapMigrator;
 
-    Balancer public oldTellorContract =
-        Balancer(0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5);
+    Balancer public oldTellorContract;
 
     mapping(address => bool) public migratedContracts;
 
@@ -23,9 +23,11 @@ contract Main {
         admin = msg.sender;
         // TODO hard code the address onse the new tallor contract enables minting from this contract.
         newTRBContract = Mintable(_newTRBContract);
+
         oldTellorContract = Balancer(
             0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5
         );
+
         uniswap = new Uniswap(0x70258Aa9830C2C84d855Df1D61E12C256F6448b4); // The uniswap TRB/ETH pool
         uniswapMigrator = address(uniswap);
 
@@ -55,6 +57,7 @@ contract Main {
         );
     }
 
+    //slither-disable-next-line unimplemented-functions
     function migrateUniswap() external {
         uint256 balance = uniswap.trbBalanceOf(msg.sender);
         require(balance > 0, "no balance to migrate");
@@ -64,11 +67,13 @@ contract Main {
 
     // Helper function for contracts with public admin to
     // send the funds directly to its address.
+    //slither-disable-next-line unimplemented-functions
     function migrateContract(address _contract) public onlyAdmin {
         address _owner = Owned(_contract).owner();
         migrateContractTo(_contract, _owner);
     }
 
+    //slither-disable-next-line unimplemented-functions
     function migrateContractTo(address _contract, address _owner)
         public
         onlyAdmin
