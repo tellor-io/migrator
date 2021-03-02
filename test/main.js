@@ -122,8 +122,7 @@ describe("All tests", function () {
 
     let migrateOk = async (contractAddr) => {
       let balanceToMigrate = Number(await olsTellorInstance.balanceOf(contractAddr))
-      const accounts = await ethers.getSigners();
-      await testee.connect(accounts[0]).migrateAddress(contractAddr)
+      await testee.migrateAddress(contractAddr)
 
       let migratedBalance = Number(await newTellor.balanceOf(contractAddr))
       expect(migratedBalance).to.equal(balanceToMigrate)
