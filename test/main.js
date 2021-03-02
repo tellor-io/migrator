@@ -79,7 +79,7 @@ describe("All tests", function () {
   })
 
   it("Constructor contract migrations", async function () {
-    const olsTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
+    const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
     let checkMigrated = async (contractAddr) => {
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
@@ -89,7 +89,7 @@ describe("All tests", function () {
     }
 
     let checkMigratedTo = async (contractAddr, contractOwner) => {
-      let balanceToMigrate = Number(await olsTellorInstance.balanceOf(contractAddr))
+      let balanceToMigrate = Number(await oldTellorInstance.balanceOf(contractAddr))
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
     }
@@ -101,10 +101,10 @@ describe("All tests", function () {
   })
 
   it("Manual contract migrations", async function () {
-    const olsTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
+    const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
     let migrateOk = async (contractAddr) => {
-      let balanceToMigrate = Number(await olsTellorInstance.balanceOf(contractAddr))
+      let balanceToMigrate = Number(await oldTellorInstance.balanceOf(contractAddr))
 
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
       const contractOwner = await ownedContract.owner()
@@ -139,23 +139,23 @@ describe("All tests", function () {
   })
 
   it("Migrate address", async function () {
-    const olsTellorInstance = await ethers.getContractAt("contracts/Interfaces.sol:Balancer", olsTellorContract)
+    const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
-    let migrateOk = async (contractAddr) => {
-      let balanceToMigrate = Number(await olsTellorInstance.balanceOf(contractAddr))
-      await testee.migrateAddress(contractAddr)
+    let migrateOk = async (addr) => {
+      let balanceToMigrate = Number(await oldTellorInstance.balanceOf(addr))
+      await testee.migrateAddress(addr)
 
-      let migratedBalance = Number(await newTellor.balanceOf(contractAddr))
+      let migratedBalance = Number(await newTellor.balanceOf(addr))
       expect(migratedBalance).to.equal(balanceToMigrate)
 
       // Second migration should revert.
-      await expect(testee.migrateAddress(contractAddr)).to.be.reverted
+      await expect(testee.migrateAddress(addr)).to.be.reverted
     }
 
-    let wallets = ["0x0C9411796D09f6Fe48B28D2271CB9D609AD951B3", "0xBCED67c5538Cd284410CC340954167A84449a25E", "0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29"]
+    let wallets = ["0x17c63868e3ab7da20adcf8c27d4ee46fdec1c325", "0xc0aa8046f860996b7b6d366b6d71391e70c74376"]
 
-    await Promise.all(wallets.map(async (contractAddr) => {
-      await migrateOk(contractAddr)
+    await Promise.all(wallets.map(async (addr) => {
+      await migrateOk(addr)
     }));
 
   })

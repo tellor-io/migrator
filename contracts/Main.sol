@@ -155,7 +155,7 @@ contract Main {
         uint256 balance = pools[poolAddr].trbBalanceOf(msg.sender);
         require(balance > 0, "no balance to migrate");
         require(pools[poolAddr].burn(msg.sender), "burn failed");
-        newTRBContract.mint(msg.sender, balance);
+        newTRBContract.migrateAddress(msg.sender, balance);
     }
 
     //slither-disable-next-line unimplemented-functions
