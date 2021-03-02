@@ -236,14 +236,4 @@ contract Main {
         admin = _admin;
         emit NewAdmin(_admin);
     }
-
-    function rescueToken(address _token) external onlyAdmin {
-        require(_token != address(newTRBContract), "not allowed to rescue");
-        // Using IUniswappair because it already contains the transfer interface
-        uint256 balance = IUniswapV2Pair(_token).balanceOf(address(this));
-        require(
-            IUniswapV2Pair(_token).transfer(admin, balance),
-            "token transfer failed"
-        );
-    }
 }
