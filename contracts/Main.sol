@@ -17,12 +17,13 @@ contract Main {
 
     mapping(address => bool) public migratedContracts;
 
-    Mintable public newTRBContract;
+    Migrator public newTRBContract;
 
     constructor(address _newTRBContract) {
         admin = msg.sender;
-        // newTRBContract = Mintable(0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0);
-        newTRBContract = Mintable(_newTRBContract);
+        // Not using the hardcoded address makes testing easier
+        // newTRBContract = Migrator(0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0);
+        newTRBContract = Migrator(_newTRBContract);
 
         oldTellorContract = Balancer(
             0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5
@@ -33,7 +34,7 @@ contract Main {
 
         // Migrate some during the initialization.
 
-        // The contract owner is public so funds will be sent firectly to its address.
+        // The contract owner is public, so the address was taken driectly from there
         _migrateContractTo(
             0x01fc3e9Bfc62ae9370694f968E33713F792C78cF,
             0xA4b85427D108d28D385bed1c1c8F27384F62EBD8

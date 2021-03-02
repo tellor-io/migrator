@@ -7,7 +7,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 // The contract is also an ERC20 token which holds the collateral currency.
 // It also holds the semi stable token state inside the `token` variable.
-contract Token is ERC20, Mintable {
+contract Token is ERC20, Migrator {
     mapping(address => bool) public migrated;
 
     function burn(address account, uint256 amount) external {

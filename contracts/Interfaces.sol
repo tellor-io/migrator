@@ -7,7 +7,7 @@ interface TRBBalancer {
     function burn(address holder) external returns (bool);
 }
 
-interface Mintable {
+interface Migrator {
     function migrateContract(
         address _origin,
         address _destination,

@@ -88,8 +88,7 @@ describe("All tests", function () {
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
       const contractOwner = await ownedContract.owner()
 
-      const accounts = await ethers.getSigners();
-      await testee.connect(accounts[0]).migrateContractTo(contractAddr, contractOwner)
+      await testee.migrateContractTo(contractAddr, contractOwner)
 
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
