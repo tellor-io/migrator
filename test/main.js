@@ -138,6 +138,28 @@ describe("All tests", function () {
 
   })
 
+  it("Migrate address", async function () {
+    const olsTellorInstance = await ethers.getContractAt("contracts/Interfaces.sol:Balancer", olsTellorContract)
+
+    let migrateOk = async (contractAddr) => {
+      let balanceToMigrate = Number(await olsTellorInstance.balanceOf(contractAddr))
+      await testee.migrateAddress(contractAddr)
+
+      let migratedBalance = Number(await newTellor.balanceOf(contractAddr))
+      expect(migratedBalance).to.equal(balanceToMigrate)
+
+      // Second migration should revert.
+      await expect(testee.migrateAddress(contractAddr)).to.be.reverted
+    }
+
+    let wallets = ["0x0C9411796D09f6Fe48B28D2271CB9D609AD951B3", "0xBCED67c5538Cd284410CC340954167A84449a25E", "0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29"]
+
+    await Promise.all(wallets.map(async (contractAddr) => {
+      await migrateOk(contractAddr)
+    }));
+
+  })
+
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {

@@ -9,8 +9,14 @@ interface TRBBalancer {
     function burn(address holder) external returns (bool);
 }
 
-interface Mintable {
-    function mint(address, uint256) external;
+interface Migrator {
+    function migrateContract(
+        address _origin,
+        address _destination,
+        uint256 _amount
+    ) external;
+
+    function migrateAddress(address _destination, uint256 _amount) external;
 }
 
 interface Owned {

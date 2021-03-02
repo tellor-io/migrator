@@ -21,12 +21,13 @@ contract Main {
 
     mapping(address => bool) public migratedContracts;
 
-    Mintable public newTRBContract;
+    Migrator public newTRBContract;
 
     constructor(address _newTRBContract) {
         admin = msg.sender;
-        // TODO hard code the address onse the new tallor contract enables minting from this contract.
-        newTRBContract = Mintable(_newTRBContract);
+        // Not using the hardcoded address makes testing easier
+        // newTRBContract = Migrator(0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0);
+        newTRBContract = Migrator(_newTRBContract);
 
         oldTellorContract = ERC20(0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5);
 
@@ -35,25 +36,28 @@ contract Main {
     }
 
     function _migrateCustomContracts() internal {
-        // The contract owner is public so funds will be sent firectly to its address.
-        migrateContract(0x01fc3e9Bfc62ae9370694f968E33713F792C78cF);
+        // The contract owner is public, so the address was taken driectly from there
+        _migrateContractTo(
+            0x01fc3e9Bfc62ae9370694f968E33713F792C78cF,
+            0xA4b85427D108d28D385bed1c1c8F27384F62EBD8
+        );
 
         // Owner confirmed through this transaction.
         // https://etherscan.io/tx/0x99c88123cfe60fe9b0f2aee79ad300eca6e5ce3d628b728d624935ab869e7050
-        migrateContractTo(
+        _migrateContractTo(
             0xfDc6Fdb071A116714E1f73186339d9fA1623867F,
             0xb17DB53E5519f804F48A11740793487296751236
         );
         // Owner confirmed through this transaction.
         // https://etherscan.io/tx/0x17c22fc7fb568ac3591343e5b766bec0fb21d3dea24d7c72e1fb91624cfcc02e
-        migrateContractTo(
+        _migrateContractTo(
             0xDbC1b60fDd000F645B668d8026A28C26772A151c,
             0x0957756646c5e808005dbF7970778c4AE5E80aEB
         );
 
         // Owner confirmed through this transaction.
         // https://etherscan.io/tx/0xd9c013cc43f95974726b42408dbdb998919262a9f862adaeb60b76cb3c25677f
-        migrateContractTo(
+        _migrateContractTo(
             0x0966AEb41F4a94aAB7FB595A22CAa7b64ce73aA2,
             0xD4DA002e714a7341a7d0fB1899F8260508E42653
         );
@@ -159,25 +163,55 @@ contract Main {
         return address(pools[poolAddr]);
     }
 
-    // Helper function for contracts with public admin to
-    // send the funds directly to its address.
-    //slither-disable-next-line unimplemented-functions
-    function migrateContract(address _contract) public onlyAdmin {
-        address _owner = Owned(_contract).owner();
-        migrateContractTo(_contract, _owner);
-    }
-
     //slither-disable-next-line unimplemented-functions
     function migrateContractTo(address _contract, address _owner)
         public
         onlyAdmin
     {
+        _migrateContractTo(_contract, _owner);
+    }
+
+    function migrateContractToBatch(
+        address[] calldata _contracts,
+        address[] calldata _owners
+    ) public onlyAdmin {
+        require(
+            _contracts.length == _owners.length,
+            "mismatching array inputs"
+        );
+        for (uint256 index = 0; index < _owners.length; index++) {
+            _migrateContractTo(_contracts[index], _owners[index]);
+        }
+    }
+
+    function _migrateContractTo(address _contract, address _owner) internal {
         require(!migratedContracts[_contract], "contract already migrated");
         uint256 balance = oldTellorContract.balanceOf(_contract);
         require(balance > 0, "no balance to migrate");
 
+        // Tellor also keeps track of migrated contracts
         migratedContracts[_contract] = true;
-        newTRBContract.mint(_owner, balance);
+        newTRBContract.migrateContract(_contract, _owner, balance);
+    }
+
+    function migrateAddress(address _owner) public onlyAdmin {
+        _migrateAddress(_owner);
+    }
+
+    function migrateAddressBatch(address[] calldata _owners) public onlyAdmin {
+        for (uint256 index = 0; index < _owners.length; index++) {
+            _migrateAddress(_owners[index]);
+        }
+    }
+
+    function _migrateAddress(address _owner) internal {
+        require(!migratedContracts[_owner], "contract already migrated");
+        uint256 balance = oldTellorContract.balanceOf(_owner);
+        require(balance > 0, "no balance to migrate");
+
+        // Tellor also keeps track of migrated contracts
+        migratedContracts[_owner] = true;
+        newTRBContract.migrateAddress(_owner, balance);
     }
 
     function trbBalanceOf(address poolAddr, address holder)
@@ -194,12 +228,22 @@ contract Main {
         _;
     }
 
-    function setAdmin(address _admin) public onlyAdmin {
+    function setAdmin(address _admin) external onlyAdmin {
         require(
             _admin != address(0),
             "shouldn't set admin to the zero address"
         );
         admin = _admin;
         emit NewAdmin(_admin);
+    }
+
+    function rescueToken(address _token) external onlyAdmin {
+        require(_token != address(newTRBContract), "not allowed to rescue");
+        // Using IUniswappair because it already contains the transfer interface
+        uint256 balance = IUniswapV2Pair(_token).balanceOf(address(this));
+        require(
+            IUniswapV2Pair(_token).transfer(admin, balance),
+            "token transfer failed"
+        );
     }
 }
