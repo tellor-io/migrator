@@ -6,7 +6,7 @@ import "hardhat/console.sol";
 import "./Interfaces.sol";
 import "./Math.sol";
 
-// Contract Uniswap implements the balancer interface and
+// Implements the TRBBalancer interface and
 // returns a user balancer in TRB.
 contract Uniswap is DSMath, TRBBalancer {
     IUniswapV2Pair public pair;

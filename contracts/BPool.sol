@@ -6,7 +6,7 @@ import "hardhat/console.sol";
 import "./Interfaces.sol";
 import "./Math.sol";
 
-// Contract Uniswap implements the balancer interface and
+// Implements the TRBBalancer interface and
 // returns a user balancer in TRB.
 contract BPool is DSMath, TRBBalancer {
     BPoolPair public pair;
@@ -38,7 +38,7 @@ contract BPool is DSMath, TRBBalancer {
 
         uint256 trbAddrBalance = wmul(trbTotalBalance, poolShare);
         // How much extra TRB need to print for the other lost tokens.
-        // For example if the pool os 25% DAI, 50% ETH, 25% TRB
+        // For example if the pool is 25% DAI, 50% ETH, 25% TRB
         // need to print 1/weight * trbAmount
         // So for a user that had 10 TRB this is
         // (1/0.25) * 10 = 40

@@ -11,11 +11,13 @@ contract Main {
     event NewAdmin(address);
     address public admin;
 
-    // The Uniswap pool.
+    // The exchange pools indexed by their pair address.
     mapping(address => TRBBalancer) public pools;
 
     ERC20 public oldTellorContract;
 
+    // All LP tokens are sent to this address when
+    // the owner receives their TRB equivalent.
     address public constant BURN_BENEFICIARY =
         0x39E419bA25196794B595B2a595Ea8E527ddC9856;
 
@@ -48,6 +50,7 @@ contract Main {
             0xfDc6Fdb071A116714E1f73186339d9fA1623867F,
             0xb17DB53E5519f804F48A11740793487296751236
         );
+
         // Owner confirmed through this transaction.
         // https://etherscan.io/tx/0x17c22fc7fb568ac3591343e5b766bec0fb21d3dea24d7c72e1fb91624cfcc02e
         _migrateContractTo(
