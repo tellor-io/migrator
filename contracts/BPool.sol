@@ -8,8 +8,9 @@ import "./Math.sol";
 
 // Contract Uniswap implements the balancer interface and
 // returns a user balancer in TRB.
-contract Uniswap is DSMath, TRBBalancer {
-    IUniswapV2Pair public pair;
+contract BPool is DSMath, TRBBalancer {
+    BPoolPair public pair;
+
     address public burnBeneficiary;
 
     constructor(address _pair, address _burnBeneficiary) {
@@ -17,7 +18,8 @@ contract Uniswap is DSMath, TRBBalancer {
             _burnBeneficiary != address(0),
             "_burnBeneficiary can't be the zero address"
         );
-        pair = IUniswapV2Pair(_pair);
+
+        pair = BPoolPair(_pair);
         burnBeneficiary = _burnBeneficiary;
     }
 
@@ -31,14 +33,23 @@ contract Uniswap is DSMath, TRBBalancer {
         uint256 totalSupply = pair.totalSupply();
         uint256 poolShare = wdiv(userBalance, totalSupply);
 
-        (uint256 trbTotalBalance, , ) = pair.getReserves();
+        uint256 trbTotalBalance =
+            pair.getBalance(0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5);
 
         uint256 trbAddrBalance = wmul(trbTotalBalance, poolShare);
-
-        // The uniswap pools are always 50/50 so
-        // give the addres 2 times more TRB for the lost ETH.
-        trbAddrBalance = 2 * trbAddrBalance;
-
+        // How much extra TRB need to print for the other lost tokens.
+        // For example if the pool os 25% DAI, 50% ETH, 25% TRB
+        // need to print 1/weight * trbAmount
+        // So for a user that had 10 TRB this is
+        // (1/0.25) * 10 = 40
+        uint256 multiplier =
+            wdiv(
+                10**18,
+                pair.getNormalizedWeight(
+                    0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5
+                )
+            );
+        trbAddrBalance = wmul(multiplier, trbAddrBalance);
         return trbAddrBalance;
     }
 

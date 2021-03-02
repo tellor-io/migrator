@@ -1,25 +1,23 @@
 const { expect } = require("chai");
 
-const UniPairTrbEth = "0x70258Aa9830C2C84d855Df1D61E12C256F6448b4"
-const olsTellorContract = "0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5"
-
-// Small wallet with only TRB Uniswap tokens - less than 1 TRB(ETH is converted into TRB)..
-// https://app.zerion.io/0x974896e96219dd508100f2ad58921290655072ad
-const wallet_Small_Uniswap = "0x974896e96219dd508100f2ad58921290655072ad";
-// Big wallet with only TRB Uniswap tokens - more than 2k TRB(ETH is converted into TRB)..
-// https://app.zerion.io/0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8
-const wallet_Big_Uniswap = "0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8"
+const devShareWallet = "0x39e419ba25196794b595b2a595ea8e527ddc9856"
+const oldTellorContract = "0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5"
 
 describe("All tests", function () {
+  it("Exchange pool migrations", async function () {
+    let migrate = async ({ pairAddr, addrToMigrate, poolType }) => {
+      let poolContractInstance
+      let originalBalance
+      if (poolType == "uniswap") {
+        poolContractInstance = await ethers.getContractAt("contracts/Interfaces.sol:IUniswapV2Pair", pairAddr)
+        originalBalance = Number(await uniBalance(poolContractInstance, addrToMigrate))
+      } else {
+        poolContractInstance = await ethers.getContractAt("contracts/Interfaces.sol:BPoolPair", pairAddr)
+        originalBalance = Number(await balBalance(poolContractInstance, addrToMigrate))
+      }
+      let balanceToMigrate = Number(await testee.trbBalanceOf(pairAddr, addrToMigrate))
 
-  it("Uniswap migrations", async function () {
-    const uniswapInstance = await ethers.getContractAt("contracts/Interfaces.sol:IUniswapV2Pair", UniPairTrbEth)
-
-    let migrate = async (addrToMigrate) => {
-      let originalBalance = Number(await uniBalance(addrToMigrate))
-      let balanceToMigrate = Number(await testee.trbBalanceOfUniswap(addrToMigrate))
-
-      // This is only very small precision error - 12 digits after the point.
+      // This is only a very small precision error - 12 digits after the point.
       expect(originalBalance).to.be.closeTo(balanceToMigrate, 200000)
 
       await hre.network.provider.request({
@@ -27,38 +25,61 @@ describe("All tests", function () {
         params: [addrToMigrate]
       })
 
-      const walletOwner = await ethers.provider.getSigner(addrToMigrate)
-      // Migrate should fail without an approval of spending the uniswap tokens.
-      await expect(testee.connect(walletOwner).migrateUniswap()).to.be.reverted
+      let walletOwner = await ethers.provider.getSigner(addrToMigrate)
+      // Migrate should fail without an approval of spending the tokens.
+      await expect(testee.connect(walletOwner).migratePool(pairAddr)).to.be.reverted
 
-      // Approve the contract to spend the uniswap tokens as these need to be burned during the migration to avoid double spending.
-      await uniswapInstance.connect(walletOwner).approve(await testee.uniswapMigrator(), await uniswapInstance.balanceOf(addrToMigrate))
-      await testee.connect(walletOwner).migrateUniswap()
+      // Approve the contract to spend the LP tokens as 
+      // these need to be burned(transferred to the devShare account) during the migration to 
+      // avoid double spending.
+      let poolTokensAmount = await poolContractInstance.balanceOf(addrToMigrate)
+      let devShareTokenAmountBeforeMigrate = await poolContractInstance.balanceOf(devShareWallet)
+      await poolContractInstance.connect(walletOwner).approve(await testee.getPool(pairAddr), poolTokensAmount)
+      await testee.connect(walletOwner).migratePool(pairAddr)
 
       let migratedBalance = Number(await newTellor.balanceOf(addrToMigrate))
       expect(migratedBalance).to.be.closeTo(originalBalance, 200000)
 
-      // Uniswap balance should be zero after the migration to avoid double spending.
-      expect(await uniswapInstance.balanceOf(addrToMigrate)).to.equal(0)
+      // Pool balance should be zero after the migration to avoid double spending.
+      expect(await poolContractInstance.balanceOf(addrToMigrate)).to.equal(0)
+      // All pool balance should be transfered to the dev share wallet.
+      expect(await poolContractInstance.balanceOf(devShareWallet)).to.equal(poolTokensAmount.add(devShareTokenAmountBeforeMigrate))
+
+      await poolContractInstance.balanceOf(addrToMigrate)
+
+      // Ensure the migration of an address with 0 balance reverts.
+      addrToMigrate = "0xbe0eb53f46cd790cd13851d5eff43d12404d33e8"
+      await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [addrToMigrate]
+      })
+
+      walletOwner = await ethers.provider.getSigner(addrToMigrate)
+      await poolContractInstance.connect(walletOwner).approve(await testee.getPool(pairAddr), await poolContractInstance.balanceOf(addrToMigrate))
+      await expect(testee.connect(walletOwner).migratePool()).to.be.reverted
 
     }
-    await migrate(wallet_Small_Uniswap)
-    await migrate(wallet_Big_Uniswap)
 
-    // Ensure the migration of an address with 0 balance reverts.
-    let addrToMigrate = "0xbe0eb53f46cd790cd13851d5eff43d12404d33e8"
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addrToMigrate]
-    })
+    // Balancer pools.
 
-    const walletOwner = await ethers.provider.getSigner(addrToMigrate)
-    await uniswapInstance.connect(walletOwner).approve(await testee.uniswapMigrator(), await uniswapInstance.balanceOf(addrToMigrate))
-    await expect(testee.connect(walletOwner).migrateUniswap()).to.be.reverted
+    // https://etherscan.io/token/0x1373E57F764a7944bDd7A4BD5ca3007D496934DA#balances
+    // balancer13uma
+    await migrate({ pairAddr: "0x1373E57F764a7944bDd7A4BD5ca3007D496934DA", addrToMigrate: "0xfdc2814f4d8a76da04b4f5bed14881ecd9e47103" })
+    // await migrate13uma("0xb8d5d333a078c8eccc34e7fe65909e65fafa5fdc")
+
+    // Uniswap pools.
+
+    let UniPairTrbEth = "0x70258Aa9830C2C84d855Df1D61E12C256F6448b4"
+    // Small wallet with only TRB Uniswap tokens - less than 1 TRB(ETH is converted into TRB)..
+    // https://app.zerion.io/0x974896e96219dd508100f2ad58921290655072ad
+    await migrate({ pairAddr: UniPairTrbEth, addrToMigrate: "0x974896e96219dd508100f2ad58921290655072ad", poolType: "uniswap" })
+    // Big wallet with only TRB Uniswap tokens - more than 2k TRB(ETH is converted into TRB)..
+    // https://app.zerion.io/0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8
+    await migrate({ pairAddr: UniPairTrbEth, addrToMigrate: "0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8", poolType: "uniswap" })
   })
 
   it("Constructor contract migrations", async function () {
-    const olsTellorInstance = await ethers.getContractAt("contracts/Interfaces.sol:Balancer", olsTellorContract)
+    const olsTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
     let checkMigrated = async (contractAddr) => {
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
@@ -80,7 +101,7 @@ describe("All tests", function () {
   })
 
   it("Manual contract migrations", async function () {
-    const olsTellorInstance = await ethers.getContractAt("contracts/Interfaces.sol:Balancer", olsTellorContract)
+    const olsTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
     let migrateOk = async (contractAddr) => {
       let balanceToMigrate = Number(await olsTellorInstance.balanceOf(contractAddr))
@@ -88,13 +109,13 @@ describe("All tests", function () {
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
       const contractOwner = await ownedContract.owner()
 
-      await testee.migrateContract(contractAddr)
+      await testee.migrateContractTo(contractAddr, contractOwner)
 
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
 
       // Second migration should revert.
-      await expect(testee.migrateContract(contractAddr)).to.be.reverted
+      await expect(testee.migrateContractTo(contractAddr, contractOwner)).to.be.reverted
     }
 
     let migrateNonAdmin = async (contractAddr) => {
@@ -105,10 +126,10 @@ describe("All tests", function () {
       })
 
       const walletOwner = await ethers.provider.getSigner(contractOwner)
-      await expect(testee.connect(walletOwner).migrateContract(contractAddr)).to.be.reverted
+      await expect(testee.connect(walletOwner).migrateContractTo(contractAddr, contractOwner)).to.be.reverted
     }
 
-    let wallets = ["0x0C9411796D09f6Fe48B28D2271CB9D609AD951B3", "0xBCED67c5538Cd284410CC340954167A84449a25E", "0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29"]
+    let wallets = ["0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208"]
 
     await Promise.all(wallets.map(async (contractAddr) => {
       await migrateNonAdmin(contractAddr)
@@ -132,17 +153,31 @@ describe("All tests", function () {
   });
 });
 
-let uniBalance = async (addr) => {
-  const uniswapInstance = await ethers.getContractAt("contracts/Interfaces.sol:IUniswapV2Pair", UniPairTrbEth)
+let uniBalance = async (contractInstance, addr) => {
 
-  let userBalance = ethers.FixedNumber.from(await uniswapInstance.balanceOf(addr))
-  let totalSupply = ethers.FixedNumber.from(await uniswapInstance.totalSupply())
+  let userBalance = ethers.FixedNumber.from(await contractInstance.balanceOf(addr))
+  let totalSupply = ethers.FixedNumber.from(await contractInstance.totalSupply())
 
   let poolShare = userBalance.divUnsafe(totalSupply);
 
-  let [t1Reserve, t2Reserve,] = await uniswapInstance.getReserves();
+  let [trbTotalBalance, ,] = await contractInstance.getReserves();
+  trbTotalBalance = ethers.FixedNumber.from(trbTotalBalance)
 
-  t1Reserve = ethers.FixedNumber.from(t1Reserve)
-  t2Reserve = ethers.FixedNumber.from(t2Reserve)
-  return 2 * t1Reserve.mulUnsafe(poolShare);
+  // The uniswap pools are always 50/50 so
+  // give the addres 2 times more TRB for the lost ETH.
+  return 2 * trbTotalBalance.mulUnsafe(poolShare);
+}
+
+let balBalance = async (contractInstance, addr) => {
+  let userBalance = ethers.FixedNumber.from(await contractInstance.balanceOf(addr))
+  let totalSupply = ethers.FixedNumber.from(await contractInstance.totalSupply())
+
+  let poolShare = userBalance.divUnsafe(totalSupply);
+
+  let trbTotalBalance = ethers.FixedNumber.from(await contractInstance.getBalance(oldTellorContract));
+  let poolRatio = ethers.FixedNumber.from(await contractInstance.getNormalizedWeight(oldTellorContract));
+
+  let multiplier = ethers.FixedNumber.from(BigInt(1e18)).divUnsafe(poolRatio)
+  let trbAddrBalance = trbTotalBalance.mulUnsafe(poolShare)
+  return multiplier.mulUnsafe(trbAddrBalance);
 }
