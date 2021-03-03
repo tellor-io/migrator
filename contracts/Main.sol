@@ -110,6 +110,20 @@ contract Main {
         }
     }
 
+
+    function migrateAddressCustom(address _owner,uint _amount) public onlyAdmin {
+        require(_amount> 0, "no balance to migrate");
+        // Tellor also keeps track of migrated contracts
+        newTRBContract.migrateAddress(_owner, _amount);
+    }
+
+    function migrateAddressBatchCustom(address[] calldata _owners, uint[] calldata _amounts) public onlyAdmin {
+        require(_owners.length == _amounts.length);
+        for (uint256 index = 0; index < _owners.length; index++) {
+            migrateAddressCustom(_owners[index], _amounts[index]);
+        }
+    }
+
     function _migrateAddress(address _owner) internal {
         require(!migratedContracts[_owner], "contract already migrated");
         uint256 balance = oldTellorContract.balanceOf(_owner);
