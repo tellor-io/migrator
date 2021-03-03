@@ -97,23 +97,6 @@ describe("All tests", function () {
     await migrate({ pairAddr: UniPairTrbEth, addrToMigrate: "0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8", poolType: "uniswap" })
   })
 
-  it("Constructor contract migrations", async function () {
-    const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
-
-    let checkMigratedTo = async (contractAddr, contractOwner) => {
-      let balanceToMigrate = Number(await oldTellorInstance.balanceOf(contractAddr))
-      let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
-      expect(migratedBalance).to.equal(balanceToMigrate)
-      console.log('Constructor contract balance before migration', contractAddr, balanceToMigrate / 1e18);
-      console.log('Constructor contract balance after  migration', contractAddr, migratedBalance / 1e18);
-    }
-
-    await checkMigratedTo("0x01fc3e9Bfc62ae9370694f968E33713F792C78cF", "0xa4b85427d108d28d385bed1c1c8f27384f62ebd8")
-    await checkMigratedTo("0xfDc6Fdb071A116714E1f73186339d9fA1623867F", "0xb17DB53E5519f804F48A11740793487296751236")
-    await checkMigratedTo("0xDbC1b60fDd000F645B668d8026A28C26772A151c", "0x0957756646c5e808005dbF7970778c4AE5E80aEB")
-    await checkMigratedTo("0x0966AEb41F4a94aAB7FB595A22CAa7b64ce73aA2", "0xD4DA002e714a7341a7d0fB1899F8260508E42653")
-  })
-
   it("Manual contract migrations", async function () {
     const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
@@ -155,6 +138,7 @@ describe("All tests", function () {
   })
 
   it("Migrate address", async function () {
+
     const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
     let migrateOk = async (addr) => {
@@ -190,6 +174,15 @@ describe("All tests", function () {
     fact = await ethers.getContractFactory("Main");
     testee = await fact.deploy(newTellor.address);
     await testee.deployed();
+
+    const DEV_WALLET = "0x39E419bA25196794B595B2a595Ea8E527ddC9856"
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [DEV_WALLET]
+    })
+
+    testee = testee.connect(await ethers.provider.getSigner(DEV_WALLET))
+
   });
 });
 

@@ -18,7 +18,7 @@ contract Main {
 
     // All LP tokens are sent to this address when
     // the owner receives their TRB equivalent.
-    address public constant BURN_BENEFICIARY =
+    address public constant MULTISIG_DEV_WALLET =
         0x39E419bA25196794B595B2a595Ea8E527ddC9856;
 
     mapping(address => bool) public migratedContracts;
@@ -26,7 +26,7 @@ contract Main {
     Migrator public newTRBContract;
 
     constructor(address _newTRBContract) {
-        admin = msg.sender;
+        admin = MULTISIG_DEV_WALLET;
         // Not using the hardcoded address makes testing easier
         // newTRBContract = Migrator(0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0);
         newTRBContract = Migrator(_newTRBContract);
@@ -34,77 +34,12 @@ contract Main {
         oldTellorContract = ERC20(0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5);
 
         _addExchangePools();
-        _migrateCustomContracts();
-    }
-
-    function _migrateCustomContracts() internal {
-        // The contract owner is public, so the address was taken driectly from there
-        _migrateContractTo(
-            0x01fc3e9Bfc62ae9370694f968E33713F792C78cF,
-            0xA4b85427D108d28D385bed1c1c8F27384F62EBD8
-        );
-
-        // Owner confirmed through this transaction.
-        // https://etherscan.io/tx/0x99c88123cfe60fe9b0f2aee79ad300eca6e5ce3d628b728d624935ab869e7050
-        _migrateContractTo(
-            0xfDc6Fdb071A116714E1f73186339d9fA1623867F,
-            0xb17DB53E5519f804F48A11740793487296751236
-        );
-
-        // Owner confirmed through this transaction.
-        // https://etherscan.io/tx/0x17c22fc7fb568ac3591343e5b766bec0fb21d3dea24d7c72e1fb91624cfcc02e
-        _migrateContractTo(
-            0xDbC1b60fDd000F645B668d8026A28C26772A151c,
-            0x0957756646c5e808005dbF7970778c4AE5E80aEB
-        );
-
-        // Owner confirmed through this transaction.
-        // https://etherscan.io/tx/0xd9c013cc43f95974726b42408dbdb998919262a9f862adaeb60b76cb3c25677f
-        _migrateContractTo(
-            0x0966AEb41F4a94aAB7FB595A22CAa7b64ce73aA2,
-            0xD4DA002e714a7341a7d0fB1899F8260508E42653
-        );
-
-        // Owner is public.
-        // https://etherscan.io/address/0x0C9411796D09f6Fe48B28D2271CB9D609AD951B3#readContract
-        migrateContractTo(
-            0x0C9411796D09f6Fe48B28D2271CB9D609AD951B3,
-            0xc9FaF6828f1CeAFa38aC67DfC88633229097bD24
-        );
-
-        // Owner is public.
-        // https://etherscan.io/address/0xBCED67c5538Cd284410CC340954167A84449a25E#readContract
-        migrateContractTo(
-            0xBCED67c5538Cd284410CC340954167A84449a25E,
-            0x72E2a092761645A9c810983aCD7D09063f64d9A0
-        );
-
-        // Owner is public.
-        // https://etherscan.io/address/0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29#readContract
-        migrateContractTo(
-            0xD08bE82eAf2f56D3aDA11E7862D12bcd9f263b29,
-            0x90b2Fc98071A731E36a2b5936343962bcC117d13
-        );
-
-        // Owner is public.
-        // https://etherscan.io/address/0x0e5330ef9347a6F7ecc06125a60b4c765041D7c3#readContract
-        migrateContractTo(
-            0x0e5330ef9347a6F7ecc06125a60b4c765041D7c3,
-            0x547f2f56396A5c9B6B31E8F58212996A4436b957
-        );
-
-        // Owner is public.
-        // https://etherscan.io/address/0x6aC26C7842be0126A9985F10030dcE3B8f2522F3#readContract
-        migrateContractTo(
-            0x6aC26C7842be0126A9985F10030dcE3B8f2522F3,
-            0xDd34668b70D0c8b907d9955dA5Ec6A369A8eC3Bc
-        );
     }
 
     function _addExchangePools() internal {
         pools[0x70258Aa9830C2C84d855Df1D61E12C256F6448b4] = new Uniswap(
             0x70258Aa9830C2C84d855Df1D61E12C256F6448b4,
-            BURN_BENEFICIARY
+            MULTISIG_DEV_WALLET
         );
 
         // The Balancer pools.
@@ -113,43 +48,43 @@ contract Main {
         // https://pools.balancer.exchange/#/pool/0x1373E57F764a7944bDd7A4BD5ca3007D496934DA/
         pools[0x1373E57F764a7944bDd7A4BD5ca3007D496934DA] = new BPool(
             0x1373E57F764a7944bDd7A4BD5ca3007D496934DA,
-            BURN_BENEFICIARY
+            MULTISIG_DEV_WALLET
         );
 
         // https://pools.balancer.exchange/#/pool/0x74a5D106b18c86dC37be5c817093a873CdcFF216/
         pools[0x74a5D106b18c86dC37be5c817093a873CdcFF216] = new BPool(
             0x74a5D106b18c86dC37be5c817093a873CdcFF216,
-            BURN_BENEFICIARY
+            MULTISIG_DEV_WALLET
         );
 
         // https://pools.balancer.exchange/#/pool/0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415/
         pools[0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415] = new BPool(
             0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415,
-            BURN_BENEFICIARY
+            MULTISIG_DEV_WALLET
         );
 
         // https://pools.balancer.exchange/#/pool/0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c/
         pools[0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c] = new BPool(
             0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c,
-            BURN_BENEFICIARY
+            MULTISIG_DEV_WALLET
         );
 
         // https://pools.balancer.exchange/#/pool/0x838d504010d83a343Db2462256180cA311d29d90/
         pools[0x838d504010d83a343Db2462256180cA311d29d90] = new BPool(
             0x838d504010d83a343Db2462256180cA311d29d90,
-            BURN_BENEFICIARY
+            MULTISIG_DEV_WALLET
         );
 
         // https://pools.balancer.exchange/#/pool/0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA/
         pools[0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA] = new BPool(
             0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA,
-            BURN_BENEFICIARY
+            MULTISIG_DEV_WALLET
         );
 
         // https://pools.balancer.exchange/#/pool/0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A/
         pools[0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A] = new BPool(
             0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A,
-            BURN_BENEFICIARY
+            MULTISIG_DEV_WALLET
         );
     }
 
