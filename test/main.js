@@ -12,6 +12,7 @@ describe("All tests", function () {
         poolContractInstance = await ethers.getContractAt("contracts/Interfaces.sol:IUniswapV2Pair", pairAddr)
         originalBalance = Number(await uniBalance(poolContractInstance, addrToMigrate))
       } else {
+        poolType = "balancer"
         poolContractInstance = await ethers.getContractAt("contracts/Interfaces.sol:BPoolPair", pairAddr)
         originalBalance = Number(await balBalance(poolContractInstance, addrToMigrate))
       }
@@ -19,6 +20,14 @@ describe("All tests", function () {
 
       // This is only a very small precision error - 12 digits after the point.
       expect(originalBalance).to.be.closeTo(balanceToMigrate, 200000)
+
+      // Send some ether to the addres that will run the migrate to
+      // make sure it can execute the transaction.
+      const signer = await ethers.provider.getSigner();
+      await signer.sendTransaction({
+        to: addrToMigrate,
+        value: ethers.utils.parseEther("1.0")
+      });
 
       await hre.network.provider.request({
         method: "hardhat_impersonateAccount",
@@ -39,6 +48,8 @@ describe("All tests", function () {
 
       let migratedBalance = Number(await newTellor.balanceOf(addrToMigrate))
       expect(migratedBalance).to.be.closeTo(originalBalance, 200000)
+      console.log('Balance before migration', poolType, " pool:", pairAddr, " addr:", addrToMigrate, balanceToMigrate / 1e18);
+      console.log('Balance after  migration', poolType, " pool:", pairAddr, " addr:", addrToMigrate, migratedBalance / 1e18);
 
       // Pool balance should be zero after the migration to avoid double spending.
       expect(await poolContractInstance.balanceOf(addrToMigrate)).to.equal(0)
@@ -68,7 +79,6 @@ describe("All tests", function () {
     await migrate({ pairAddr: "0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415", addrToMigrate: "0x40ae2e5b81811c305365552b78bda4fe6f9df62f" })
     await migrate({ pairAddr: "0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c", addrToMigrate: "0x0b1e2f9668c0d6fb927c88bc52117b137b50efa2" })
     await migrate({ pairAddr: "0x838d504010d83a343Db2462256180cA311d29d90", addrToMigrate: "0x215ae5e25647dada54573c3de6924d8dc9f77ca6" })
-    await migrate({ pairAddr: "0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA", addrToMigrate: "0x49690541e3f6e933a9aa3cffee6010a7bb5b72d7" })
     await migrate({ pairAddr: "0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A", addrToMigrate: "0x473bbc06d7fdb7713d1ed334f8d8096cad6ec3f3" })
 
     // Uniswap pools.
@@ -89,6 +99,8 @@ describe("All tests", function () {
       let balanceToMigrate = Number(await oldTellorInstance.balanceOf(contractAddr))
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
+      console.log('Constructor contract balance before migration', contractAddr, balanceToMigrate / 1e18);
+      console.log('Constructor contract balance after  migration', contractAddr, migratedBalance / 1e18);
     }
 
     await checkMigratedTo("0x01fc3e9Bfc62ae9370694f968E33713F792C78cF", "0xa4b85427d108d28d385bed1c1c8f27384f62ebd8")
@@ -110,6 +122,8 @@ describe("All tests", function () {
 
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
+      console.log('Contract balance before migration', contractAddr, balanceToMigrate);
+      console.log('Contract balance after  migration', contractAddr, migratedBalance);
 
       // Second migration should revert.
       await expect(testee.migrateContractTo(contractAddr, contractOwner)).to.be.reverted
@@ -144,6 +158,8 @@ describe("All tests", function () {
 
       let migratedBalance = Number(await newTellor.balanceOf(addr))
       expect(migratedBalance).to.equal(balanceToMigrate)
+      console.log('Address balance before migration', addr, balanceToMigrate / 1e18);
+      console.log('Address balance after  migration', addr, migratedBalance / 1e18);
 
       // Second migration should revert.
       await expect(testee.migrateAddress(addr)).to.be.reverted
