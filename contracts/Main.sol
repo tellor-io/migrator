@@ -4,69 +4,101 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "./Interfaces.sol";
 import "./Uniswap.sol";
+import "./BPool.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract Main {
     event NewAdmin(address);
     address public admin;
 
-    TRBBalancer public uniswap;
-    //slither-disable-next-line constable-states
-    address public immutable uniswapMigrator;
+    // The exchange pools indexed by their pair address.
+    mapping(address => TRBBalancer) public pools;
 
-    Balancer public oldTellorContract;
+    ERC20 public oldTellorContract;
+
+    // All LP tokens are sent to this address when
+    // the owner receives their TRB equivalent.
+    address public constant MULTISIG_DEV_WALLET =
+        0x39E419bA25196794B595B2a595Ea8E527ddC9856;
 
     mapping(address => bool) public migratedContracts;
 
     Migrator public newTRBContract;
 
     constructor(address _newTRBContract) {
-        admin = msg.sender;
+        admin = MULTISIG_DEV_WALLET;
         // Not using the hardcoded address makes testing easier
         // newTRBContract = Migrator(0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0);
         newTRBContract = Migrator(_newTRBContract);
 
-        oldTellorContract = Balancer(
-            0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5
+        oldTellorContract = ERC20(0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5);
+
+        _addExchangePools();
+    }
+
+    function _addExchangePools() internal {
+        pools[0x70258Aa9830C2C84d855Df1D61E12C256F6448b4] = new Uniswap(
+            0x70258Aa9830C2C84d855Df1D61E12C256F6448b4,
+            MULTISIG_DEV_WALLET
         );
 
-        uniswap = new Uniswap(0x70258Aa9830C2C84d855Df1D61E12C256F6448b4); // The uniswap TRB/ETH pool
-        uniswapMigrator = address(uniswap);
+        // The Balancer pools.
+        // https://pools.balancer.exchange/#/explore?token=0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5
 
-        // Migrate some during the initialization.
-
-        // The contract owner is public, so the address was taken driectly from there
-        _migrateContractTo(
-            0x01fc3e9Bfc62ae9370694f968E33713F792C78cF,
-            0xA4b85427D108d28D385bed1c1c8F27384F62EBD8
+        // https://pools.balancer.exchange/#/pool/0x1373E57F764a7944bDd7A4BD5ca3007D496934DA/
+        pools[0x1373E57F764a7944bDd7A4BD5ca3007D496934DA] = new BPool(
+            0x1373E57F764a7944bDd7A4BD5ca3007D496934DA,
+            MULTISIG_DEV_WALLET
         );
 
-        // Owner confirmed through this transaction.
-        // https://etherscan.io/tx/0x99c88123cfe60fe9b0f2aee79ad300eca6e5ce3d628b728d624935ab869e7050
-        _migrateContractTo(
-            0xfDc6Fdb071A116714E1f73186339d9fA1623867F,
-            0xb17DB53E5519f804F48A11740793487296751236
-        );
-        // Owner confirmed through this transaction.
-        // https://etherscan.io/tx/0x17c22fc7fb568ac3591343e5b766bec0fb21d3dea24d7c72e1fb91624cfcc02e
-        _migrateContractTo(
-            0xDbC1b60fDd000F645B668d8026A28C26772A151c,
-            0x0957756646c5e808005dbF7970778c4AE5E80aEB
+        // https://pools.balancer.exchange/#/pool/0x74a5D106b18c86dC37be5c817093a873CdcFF216/
+        pools[0x74a5D106b18c86dC37be5c817093a873CdcFF216] = new BPool(
+            0x74a5D106b18c86dC37be5c817093a873CdcFF216,
+            MULTISIG_DEV_WALLET
         );
 
-        // Owner confirmed through this transaction.
-        // https://etherscan.io/tx/0xd9c013cc43f95974726b42408dbdb998919262a9f862adaeb60b76cb3c25677f
-        _migrateContractTo(
-            0x0966AEb41F4a94aAB7FB595A22CAa7b64ce73aA2,
-            0xD4DA002e714a7341a7d0fB1899F8260508E42653
+        // https://pools.balancer.exchange/#/pool/0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415/
+        pools[0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415] = new BPool(
+            0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415,
+            MULTISIG_DEV_WALLET
+        );
+
+        // https://pools.balancer.exchange/#/pool/0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c/
+        pools[0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c] = new BPool(
+            0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c,
+            MULTISIG_DEV_WALLET
+        );
+
+        // https://pools.balancer.exchange/#/pool/0x838d504010d83a343Db2462256180cA311d29d90/
+        pools[0x838d504010d83a343Db2462256180cA311d29d90] = new BPool(
+            0x838d504010d83a343Db2462256180cA311d29d90,
+            MULTISIG_DEV_WALLET
+        );
+
+        // https://pools.balancer.exchange/#/pool/0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA/
+        pools[0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA] = new BPool(
+            0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA,
+            MULTISIG_DEV_WALLET
+        );
+
+        // https://pools.balancer.exchange/#/pool/0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A/
+        pools[0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A] = new BPool(
+            0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A,
+            MULTISIG_DEV_WALLET
         );
     }
 
     //slither-disable-next-line unimplemented-functions
-    function migrateUniswap() external {
-        uint256 balance = uniswap.trbBalanceOf(msg.sender);
+    function migratePool(address poolAddr) external {
+        uint256 balance = pools[poolAddr].trbBalanceOf(msg.sender);
         require(balance > 0, "no balance to migrate");
-        require(uniswap.burn(msg.sender), "burn failed");
+        require(pools[poolAddr].burn(msg.sender), "burn failed");
         newTRBContract.migrateAddress(msg.sender, balance);
+    }
+
+    //slither-disable-next-line unimplemented-functions
+    function getPool(address poolAddr) external view returns (address) {
+        return address(pools[poolAddr]);
     }
 
     //slither-disable-next-line unimplemented-functions
@@ -120,12 +152,12 @@ contract Main {
         newTRBContract.migrateAddress(_owner, balance);
     }
 
-    function trbBalanceOfUniswap(address holder)
+    function trbBalanceOf(address poolAddr, address holder)
         external
         view
         returns (uint256)
     {
-        uint256 totalBalance = uniswap.trbBalanceOf(holder);
+        uint256 totalBalance = pools[poolAddr].trbBalanceOf(holder);
         return totalBalance;
     }
 
@@ -141,15 +173,5 @@ contract Main {
         );
         admin = _admin;
         emit NewAdmin(_admin);
-    }
-
-    function rescueToken(address _token) external onlyAdmin {
-        require(_token != address(newTRBContract), "not allowed to rescue");
-        // Using IUniswappair because it already contains the transfer interface
-        uint256 balance = IUniswapV2Pair(_token).balanceOf(address(this));
-        require(
-            IUniswapV2Pair(_token).transfer(admin, balance),
-            "token transfer failed"
-        );
     }
 }
