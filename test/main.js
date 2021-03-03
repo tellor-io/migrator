@@ -8,13 +8,18 @@ describe("All tests", function () {
     let migrate = async ({ pairAddr, addrToMigrate, poolType }) => {
       let poolContractInstance
       let originalBalance
+      let multiplier
       if (poolType == "uniswap") {
         poolContractInstance = await ethers.getContractAt("contracts/Interfaces.sol:IUniswapV2Pair", pairAddr)
-        originalBalance = Number(await uniBalance(poolContractInstance, addrToMigrate))
+        res = await uniBalance(poolContractInstance, addrToMigrate)
+        originalBalance = res[0]
+        multiplier = res[1]
       } else {
         poolType = "balancer"
         poolContractInstance = await ethers.getContractAt("contracts/Interfaces.sol:BPoolPair", pairAddr)
-        originalBalance = Number(await balBalance(poolContractInstance, addrToMigrate))
+        res = await balBalance(poolContractInstance, addrToMigrate)
+        originalBalance = res[0]
+        multiplier = res[1]
       }
       let balanceToMigrate = Number(await testee.trbBalanceOf(pairAddr, addrToMigrate))
 
@@ -48,8 +53,8 @@ describe("All tests", function () {
 
       let migratedBalance = Number(await newTellor.balanceOf(addrToMigrate))
       expect(migratedBalance).to.be.closeTo(originalBalance, 200000)
-      console.log('Balance before migration', poolType, " pool:", pairAddr, " addr:", addrToMigrate, balanceToMigrate / 1e18);
-      console.log('Balance after  migration', poolType, " pool:", pairAddr, " addr:", addrToMigrate, migratedBalance / 1e18);
+      console.log('Pool balance before migration', poolType, " pool:", pairAddr, " addr:", addrToMigrate, balanceToMigrate / 1e18 / multiplier, " multiplier:", multiplier);
+      console.log('Pool balance after  migration', poolType, " pool:", pairAddr, " addr:", addrToMigrate, migratedBalance / 1e18);
 
       // Pool balance should be zero after the migration to avoid double spending.
       expect(await poolContractInstance.balanceOf(addrToMigrate)).to.equal(0)
@@ -200,7 +205,7 @@ let uniBalance = async (contractInstance, addr) => {
 
   // The uniswap pools are always 50/50 so
   // give the addres 2 times more TRB for the lost ETH.
-  return 2 * trbTotalBalance.mulUnsafe(poolShare);
+  return [Number(2 * trbTotalBalance.mulUnsafe(poolShare)), 2]
 }
 
 let balBalance = async (contractInstance, addr) => {
@@ -214,5 +219,5 @@ let balBalance = async (contractInstance, addr) => {
 
   let multiplier = ethers.FixedNumber.from(BigInt(1e18)).divUnsafe(poolRatio)
   let trbAddrBalance = trbTotalBalance.mulUnsafe(poolShare)
-  return multiplier.mulUnsafe(trbAddrBalance);
+  return [Number(multiplier.mulUnsafe(trbAddrBalance)), Number(multiplier)]
 }
