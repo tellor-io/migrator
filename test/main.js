@@ -62,10 +62,14 @@ describe("All tests", function () {
 
     // Balancer pools.
 
-    // https://etherscan.io/token/0x1373E57F764a7944bDd7A4BD5ca3007D496934DA#balances
-    // balancer13uma
+    // One address of each pool pair.
     await migrate({ pairAddr: "0x1373E57F764a7944bDd7A4BD5ca3007D496934DA", addrToMigrate: "0xfdc2814f4d8a76da04b4f5bed14881ecd9e47103" })
-    // await migrate13uma("0xb8d5d333a078c8eccc34e7fe65909e65fafa5fdc")
+    await migrate({ pairAddr: "0x74a5D106b18c86dC37be5c817093a873CdcFF216", addrToMigrate: "0xc805f55c18c62e278382cc16f51ea5c4becfc74d" })
+    await migrate({ pairAddr: "0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415", addrToMigrate: "0x40ae2e5b81811c305365552b78bda4fe6f9df62f" })
+    await migrate({ pairAddr: "0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c", addrToMigrate: "0x0b1e2f9668c0d6fb927c88bc52117b137b50efa2" })
+    await migrate({ pairAddr: "0x838d504010d83a343Db2462256180cA311d29d90", addrToMigrate: "0x215ae5e25647dada54573c3de6924d8dc9f77ca6" })
+    await migrate({ pairAddr: "0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA", addrToMigrate: "0x49690541e3f6e933a9aa3cffee6010a7bb5b72d7" })
+    await migrate({ pairAddr: "0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A", addrToMigrate: "0x473bbc06d7fdb7713d1ed334f8d8096cad6ec3f3" })
 
     // Uniswap pools.
 
@@ -81,20 +85,13 @@ describe("All tests", function () {
   it("Constructor contract migrations", async function () {
     const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
-    let checkMigrated = async (contractAddr) => {
-      const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
-      const contractOwner = await ownedContract.owner()
-
-      await checkMigratedTo(contractAddr, contractOwner)
-    }
-
     let checkMigratedTo = async (contractAddr, contractOwner) => {
       let balanceToMigrate = Number(await oldTellorInstance.balanceOf(contractAddr))
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
     }
 
-    await checkMigrated("0x01fc3e9Bfc62ae9370694f968E33713F792C78cF")
+    await checkMigratedTo("0x01fc3e9Bfc62ae9370694f968E33713F792C78cF", "0xa4b85427d108d28d385bed1c1c8f27384f62ebd8")
     await checkMigratedTo("0xfDc6Fdb071A116714E1f73186339d9fA1623867F", "0xb17DB53E5519f804F48A11740793487296751236")
     await checkMigratedTo("0xDbC1b60fDd000F645B668d8026A28C26772A151c", "0x0957756646c5e808005dbF7970778c4AE5E80aEB")
     await checkMigratedTo("0x0966AEb41F4a94aAB7FB595A22CAa7b64ce73aA2", "0xD4DA002e714a7341a7d0fB1899F8260508E42653")
