@@ -93,7 +93,7 @@ contract Main {
         uint256 balance = pools[poolAddr].trbBalanceOf(msg.sender);
         require(balance > 0, "no balance to migrate");
         require(pools[poolAddr].burn(msg.sender), "burn failed");
-        newTRBContract.migrateAddress(msg.sender, balance);
+        newTRBContract.migrateFor(msg.sender, balance);
     }
 
     //slither-disable-next-line unimplemented-functions
@@ -101,55 +101,128 @@ contract Main {
         return address(pools[poolAddr]);
     }
 
+    // Admin functions
     //slither-disable-next-line unimplemented-functions
-    function migrateContractTo(address _contract, address _owner)
-        public
-        onlyAdmin
-    {
-        _migrateContractTo(_contract, _owner);
+    function migrateFrom(address _contract, address _owner) external onlyAdmin {
+        uint256 balance = oldTellorContract.balanceOf(_contract);
+        require(balance > 0, "no balance to migrate");
+        _migrateFrom(_contract, _owner, balance);
     }
 
-    function migrateContractToBatch(
+    function migrateFromCustom(
+        address _contract,
+        address _owner,
+        uint256 _amount
+    ) external onlyAdmin {
+        require(_amount > 0, "no balance to migrate");
+        _migrateFrom(_contract, _owner, _amount);
+    }
+
+    function migrateFromBatch(
         address[] calldata _contracts,
         address[] calldata _owners
-    ) public onlyAdmin {
+    ) external onlyAdmin {
         require(
             _contracts.length == _owners.length,
             "mismatching array inputs"
         );
+        uint256[] memory _balances = new uint256[](_owners.length);
         for (uint256 index = 0; index < _owners.length; index++) {
-            _migrateContractTo(_contracts[index], _owners[index]);
+            _balances[index] = oldTellorContract.balanceOf(_contracts[index]);
         }
+        _migrateFromBatch(_contracts, _owners, _balances);
     }
 
-    function _migrateContractTo(address _contract, address _owner) internal {
-        require(!migratedContracts[_contract], "contract already migrated");
-        uint256 balance = oldTellorContract.balanceOf(_contract);
-        require(balance > 0, "no balance to migrate");
-
-        // Tellor also keeps track of migrated contracts
-        migratedContracts[_contract] = true;
-        newTRBContract.migrateContract(_contract, _owner, balance);
+    function migrateFromBatchCustom(
+        address[] calldata _contracts,
+        address[] calldata _owners,
+        uint256[] calldata _amounts
+    ) external onlyAdmin {
+        require(
+            _contracts.length == _owners.length &&
+                _owners.length == _amounts.length,
+            "mismatching array inputs"
+        );
+        _migrateFromBatch(_contracts, _owners, _amounts);
     }
 
-    function migrateAddress(address _owner) public onlyAdmin {
-        _migrateAddress(_owner);
+    function migrateFor(address _owner) public onlyAdmin {
+        uint256 _balance = oldTellorContract.balanceOf(_owner);
+        require(_balance > 0, "no balance to migrate");
+        _migrateFor(_owner, _balance);
     }
 
-    function migrateAddressBatch(address[] calldata _owners) public onlyAdmin {
+    function migrateForCustom(address _owner, uint256 _amount)
+        external
+        onlyAdmin
+    {
+        require(_amount > 0, "no balance to migrate");
+        _migrateFor(_owner, _amount);
+    }
+
+    function migrateForBatch(address[] calldata _owners) external onlyAdmin {
+        uint256[] memory _balances = new uint256[](_owners.length);
         for (uint256 index = 0; index < _owners.length; index++) {
-            _migrateAddress(_owners[index]);
+            _balances[index] = oldTellorContract.balanceOf(_owners[index]);
         }
+        _migrateForBatch(_owners, _balances);
     }
 
-    function _migrateAddress(address _owner) internal {
+    function migrateForBatchCustom(
+        address[] calldata _owners,
+        uint256[] calldata _amounts
+    ) external onlyAdmin {
+        require(_owners.length == _amounts.length, "mismatching array inputs");
+        _migrateForBatch(_owners, _amounts);
+    }
+
+    // Internal Functions
+    function _migrateFor(address _owner, uint256 _amount) internal {
         require(!migratedContracts[_owner], "contract already migrated");
-        uint256 balance = oldTellorContract.balanceOf(_owner);
-        require(balance > 0, "no balance to migrate");
-
         // Tellor also keeps track of migrated contracts
         migratedContracts[_owner] = true;
-        newTRBContract.migrateAddress(_owner, balance);
+        newTRBContract.migrateFor(_owner, _amount);
+    }
+
+    function _migrateForBatch(
+        address[] calldata _owners,
+        uint256[] memory _amounts
+    ) internal {
+        for (uint256 index = 0; index < _owners.length; index++) {
+            require(
+                !migratedContracts[_owners[index]],
+                "contract already migrated"
+            );
+            migratedContracts[_owners[index]] = true;
+        }
+        // Tellor also keeps track of migrated contracts
+        newTRBContract.migrateForBatch(_owners, _amounts);
+    }
+
+    function _migrateFrom(
+        address _owner,
+        address _dest,
+        uint256 _amount
+    ) internal {
+        require(!migratedContracts[_owner], "contract already migrated");
+        // Tellor also keeps track of migrated contracts
+        migratedContracts[_owner] = true;
+        newTRBContract.migrateFrom(_owner, _dest, _amount);
+    }
+
+    function _migrateFromBatch(
+        address[] calldata _owners,
+        address[] calldata _dests,
+        uint256[] memory _amounts
+    ) internal {
+        for (uint256 index = 0; index < _owners.length; index++) {
+            require(
+                !migratedContracts[_owners[index]],
+                "contract already migrated"
+            );
+            migratedContracts[_owners[index]] = true;
+        }
+        newTRBContract.migrateFromBatch(_owners, _dests, _amounts);
     }
 
     function trbBalanceOf(address poolAddr, address holder)

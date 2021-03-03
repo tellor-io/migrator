@@ -21,7 +21,7 @@ contract Token is ERC20, Migrator {
      * @param _destination is the address that will receive tokens
      * @param _amount iis the amount to mint to the user
      */
-    function migrateContract(
+    function migrateFrom(
         address _origin,
         address _destination,
         uint256 _amount
@@ -31,19 +31,42 @@ contract Token is ERC20, Migrator {
         migrated[_origin] = true;
     }
 
+    function migrateFromBatch(
+        address[] calldata _origins,
+        address[] calldata _destinations,
+        uint256[] calldata _amounts
+    ) external override {
+        for (uint256 index = 0; index < _amounts.length; index++) {
+            require(!migrated[_origins[index]], "alredy migrated");
+            _mint(_destinations[index], _amounts[index]);
+            migrated[_origins[index]] = true;
+        }
+    }
+
     /**
      * @dev This is an internal function used by the function migrate  that helps to
      *  swap old trb tokens for new ones based on the user's old Tellor balance
      * @param _destination is the address that will receive tokens
      * @param _amount iis the amount to mint to the user
      */
-    function migrateAddress(address _destination, uint256 _amount)
+    function migrateFor(address _destination, uint256 _amount)
         external
         override
     {
         require(!migrated[_destination], "alredy migrated");
         _mint(_destination, _amount);
         migrated[_destination] = true;
+    }
+
+    function migrateForBatch(
+        address[] calldata _destinations,
+        uint256[] calldata _amounts
+    ) external override {
+        for (uint256 index = 0; index < _destinations.length; index++) {
+            require(!migrated[_destinations[index]], "alredy migrated");
+            _mint(_destinations[index], _amounts[index]);
+            migrated[_destinations[index]] = true;
+        }
     }
 
     // solhint-disable-next-line no-empty-blocks

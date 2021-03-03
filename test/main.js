@@ -106,7 +106,7 @@ describe("All tests", function () {
       const ownedContract = await ethers.getContractAt("contracts/Interfaces.sol:Owned", contractAddr)
       const contractOwner = await ownedContract.owner()
 
-      await testee.migrateContractTo(contractAddr, contractOwner)
+      await testee.migrateFrom(contractAddr, contractOwner)
 
       let migratedBalance = Number(await newTellor.balanceOf(contractOwner))
       expect(migratedBalance).to.equal(balanceToMigrate)
@@ -114,7 +114,7 @@ describe("All tests", function () {
       console.log('Contract balance after  migration', contractAddr, migratedBalance);
 
       // Second migration should revert.
-      await expect(testee.migrateContractTo(contractAddr, contractOwner)).to.be.reverted
+      await expect(testee.migrateFrom(contractAddr, contractOwner)).to.be.reverted
     }
 
     let migrateNonAdmin = async (contractAddr) => {
@@ -125,7 +125,7 @@ describe("All tests", function () {
       })
 
       const walletOwner = await ethers.provider.getSigner(contractOwner)
-      await expect(testee.connect(walletOwner).migrateContractTo(contractAddr, contractOwner)).to.be.reverted
+      await expect(testee.connect(walletOwner).migrateFrom(contractAddr, contractOwner)).to.be.reverted
     }
 
     let wallets = ["0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208"]
@@ -137,13 +137,13 @@ describe("All tests", function () {
 
   })
 
-  it("Migrate address", async function () {
+  it("Migrates for address", async function () {
 
     const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
 
     let migrateOk = async (addr) => {
       let balanceToMigrate = Number(await oldTellorInstance.balanceOf(addr))
-      await testee.migrateAddress(addr)
+      await testee.migrateFor(addr)
 
       let migratedBalance = Number(await newTellor.balanceOf(addr))
       expect(migratedBalance).to.equal(balanceToMigrate)
@@ -151,7 +151,7 @@ describe("All tests", function () {
       console.log('Address balance after  migration', addr, migratedBalance / 1e18);
 
       // Second migration should revert.
-      await expect(testee.migrateAddress(addr)).to.be.reverted
+      await expect(testee.migrateFor(addr)).to.be.reverted
     }
 
     let wallets = ["0x17c63868e3ab7da20adcf8c27d4ee46fdec1c325", "0xc0aa8046f860996b7b6d366b6d71391e70c74376"]
