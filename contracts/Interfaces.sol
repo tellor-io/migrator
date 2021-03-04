@@ -10,13 +10,29 @@ interface TRBBalancer {
 }
 
 interface Migrator {
-    function migrateContract(
+    function migrateFrom(
         address _origin,
         address _destination,
-        uint256 _amount
+        uint256 _amount,
+        bool bypass
     ) external;
 
-    function migrateAddress(address _destination, uint256 _amount) external;
+    function migrateFromBatch(
+        address[] calldata _origin,
+        address[] calldata _destination,
+        uint256[] calldata _amount
+    ) external;
+
+    function migrateFor(
+        address _destination,
+        uint256 _amount,
+        bool bypass
+    ) external;
+
+    function migrateForBatch(
+        address[] calldata _destination,
+        uint256[] calldata _amount
+    ) external;
 }
 
 interface Owned {
