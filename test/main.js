@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+// const { ethers } = require("hardhat-ethers");
 
 const devShareWallet = "0x39e419ba25196794b595b2a595ea8e527ddc9856"
 const oldTellorContract = "0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5"
@@ -159,7 +160,43 @@ describe("All tests", function () {
     await Promise.all(wallets.map(async (addr) => {
       await migrateOk(addr)
     }));
+  })
 
+  it("Custom 'for' migrations", async function () {
+
+
+    const balanceCheck = async (addr, amount) => {
+      let migratedBalance = Number(await newTellor.balanceOf(addr))
+      expect(migratedBalance).to.equal(Number(amount))
+    }
+
+    const customMigrate = async (addr, amt) => {
+      await testee.migrateForCustom(addr, amt, false)
+      await balanceCheck(addr, amt)
+      // Second migration should revert.
+      await expect(testee.migrateFor(addr)).to.be.reverted
+    }
+ 
+    const customMigrateBatch = async(addrs, amts) => {
+      await testee.migrateForBatchCustom(addrs, amts)
+      await Promise.all(addrs.map(async (addr, i) => {
+        await balanceCheck(addr, amts[i])
+      }))
+      // Second Migration should revert
+      await expect(testee.migrateForBatchCustom(addrs, amts)).to.be.reverted
+    }
+
+    let wallets = ["0x17c63868e3ab7da20adcf8c27d4ee46fdec1c325", "0xc0aa8046f860996b7b6d366b6d71391e70c74376"]
+
+    await Promise.all(wallets.map(async (addr) => {
+      let amt = BigInt(1e19)
+      await customMigrate(addr, amt)
+    }));
+
+    let batchwallets = ["0x74a5D106b18c86dC37be5c817093a873CdcFF216", "0x8581DD5550F04C1D4EFb19D720C47bCdc7e01A3e"]
+    let batchamounts = [BigInt(1e18), BigInt(1e17)]
+
+    await customMigrateBatch(batchwallets, batchamounts)
   })
 
   // `beforeEach` will run before each test, re-deploying the contract every
