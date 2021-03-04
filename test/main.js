@@ -50,8 +50,12 @@ describe("All tests", function () {
       let poolTokensAmount = await poolContractInstance.balanceOf(addrToMigrate)
       let devShareTokenAmountBeforeMigrate = await poolContractInstance.balanceOf(devShareWallet)
       await poolContractInstance.connect(walletOwner).approve(await testee.getPool(pairAddr), poolTokensAmount)
-      await testee.connect(walletOwner).migratePool(pairAddr)
-
+      if(poolType == "balancer"){
+        await testee.migratePoolFor(pairAddr,addrToMigrate)
+      }
+      else{
+        await testee.connect(walletOwner).migratePool(pairAddr)
+      }
       let migratedBalance = Number(await newTellor.balanceOf(addrToMigrate))
       expect(migratedBalance).to.be.closeTo(originalBalance, 200000)
       console.log('Pool balance before migration', poolType, " pool:", pairAddr, " addr:", addrToMigrate, balanceToMigrate / 1e18 / multiplier, " multiplier:", multiplier);
@@ -74,6 +78,12 @@ describe("All tests", function () {
       walletOwner = await ethers.provider.getSigner(addrToMigrate)
       await poolContractInstance.connect(walletOwner).approve(await testee.getPool(pairAddr), await poolContractInstance.balanceOf(addrToMigrate))
       await expect(testee.connect(walletOwner).migratePool()).to.be.reverted
+      if(poolType == "balancer"){
+        await expect(testee.migratePoolFor(pairAddr,walletOwner)).to.be.reverted
+      }
+      else{
+        await expect(testee.connect(walletOwner).migratePool()).to.be.reverted
+      }
 
     }
 
@@ -96,7 +106,7 @@ describe("All tests", function () {
     // Big wallet with only TRB Uniswap tokens - more than 2k TRB(ETH is converted into TRB)..
     // https://app.zerion.io/0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8
     await migrate({ pairAddr: UniPairTrbEth, addrToMigrate: "0xf7a9ac9abe8e38ec6c30584081de1edf51a0e9b8", poolType: "uniswap" })
-  })
+  }).timeout(300000)
 
   it("Manual contract migrations", async function () {
     const oldTellorInstance = await ethers.getContractAt("openzeppelin-solidity/contracts/token/ERC20/IERC20.sol:IERC20", oldTellorContract)
