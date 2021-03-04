@@ -93,7 +93,7 @@ contract Main {
         uint256 balance = pools[poolAddr].trbBalanceOf(msg.sender);
         require(balance > 0, "no balance to migrate");
         require(pools[poolAddr].burn(msg.sender), "burn failed");
-        newTRBContract.migrateFor(msg.sender, balance);
+        newTRBContract.migrateFor(msg.sender, balance, false);
     }
 
     //slither-disable-next-line unimplemented-functions
@@ -106,16 +106,17 @@ contract Main {
     function migrateFrom(address _contract, address _owner) external onlyAdmin {
         uint256 balance = oldTellorContract.balanceOf(_contract);
         require(balance > 0, "no balance to migrate");
-        _migrateFrom(_contract, _owner, balance);
+        _migrateFrom(_contract, _owner, balance, false);
     }
 
     function migrateFromCustom(
         address _contract,
         address _owner,
-        uint256 _amount
+        uint256 _amount,
+        bool _bypass
     ) external onlyAdmin {
         require(_amount > 0, "no balance to migrate");
-        _migrateFrom(_contract, _owner, _amount);
+        _migrateFrom(_contract, _owner, _amount, _bypass);
     }
 
     function migrateFromBatch(
@@ -149,15 +150,16 @@ contract Main {
     function migrateFor(address _owner) public onlyAdmin {
         uint256 _balance = oldTellorContract.balanceOf(_owner);
         require(_balance > 0, "no balance to migrate");
-        _migrateFor(_owner, _balance);
+        _migrateFor(_owner, _balance, false);
     }
 
-    function migrateForCustom(address _owner, uint256 _amount)
-        external
-        onlyAdmin
-    {
+    function migrateForCustom(
+        address _owner,
+        uint256 _amount,
+        bool _bypass
+    ) external onlyAdmin {
         require(_amount > 0, "no balance to migrate");
-        _migrateFor(_owner, _amount);
+        _migrateFor(_owner, _amount, _bypass);
     }
 
     function migrateForBatch(address[] calldata _owners) external onlyAdmin {
@@ -177,11 +179,16 @@ contract Main {
     }
 
     // Internal Functions
-    function _migrateFor(address _owner, uint256 _amount) internal {
-        require(!migratedContracts[_owner], "contract already migrated");
+    function _migrateFor(
+        address _owner,
+        uint256 _amount,
+        bool _bypass
+    ) internal {
+        if (!_bypass)
+            require(!migratedContracts[_owner], "contract already migrated");
         // Tellor also keeps track of migrated contracts
         migratedContracts[_owner] = true;
-        newTRBContract.migrateFor(_owner, _amount);
+        newTRBContract.migrateFor(_owner, _amount, _bypass);
     }
 
     function _migrateForBatch(
@@ -202,12 +209,14 @@ contract Main {
     function _migrateFrom(
         address _owner,
         address _dest,
-        uint256 _amount
+        uint256 _amount,
+        bool _bypass
     ) internal {
-        require(!migratedContracts[_owner], "contract already migrated");
+        if (!_bypass)
+            require(!migratedContracts[_owner], "contract already migrated");
         // Tellor also keeps track of migrated contracts
         migratedContracts[_owner] = true;
-        newTRBContract.migrateFrom(_owner, _dest, _amount);
+        newTRBContract.migrateFrom(_owner, _dest, _amount, _bypass);
     }
 
     function _migrateFromBatch(

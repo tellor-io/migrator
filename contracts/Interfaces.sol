@@ -13,7 +13,8 @@ interface Migrator {
     function migrateFrom(
         address _origin,
         address _destination,
-        uint256 _amount
+        uint256 _amount,
+        bool bypass
     ) external;
 
     function migrateFromBatch(
@@ -22,7 +23,11 @@ interface Migrator {
         uint256[] calldata _amount
     ) external;
 
-    function migrateFor(address _destination, uint256 _amount) external;
+    function migrateFor(
+        address _destination,
+        uint256 _amount,
+        bool bypass
+    ) external;
 
     function migrateForBatch(
         address[] calldata _destination,

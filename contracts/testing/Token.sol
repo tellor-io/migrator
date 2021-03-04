@@ -24,9 +24,10 @@ contract Token is ERC20, Migrator {
     function migrateFrom(
         address _origin,
         address _destination,
-        uint256 _amount
+        uint256 _amount,
+        bool _bypass
     ) external override {
-        require(!migrated[_origin], "alredy migrated");
+        if (!_bypass) require(!migrated[_origin], "alredy migrated");
         _mint(_destination, _amount);
         migrated[_origin] = true;
     }
@@ -49,11 +50,12 @@ contract Token is ERC20, Migrator {
      * @param _destination is the address that will receive tokens
      * @param _amount iis the amount to mint to the user
      */
-    function migrateFor(address _destination, uint256 _amount)
-        external
-        override
-    {
-        require(!migrated[_destination], "alredy migrated");
+    function migrateFor(
+        address _destination,
+        uint256 _amount,
+        bool _bypass
+    ) external override {
+        if (!_bypass) require(!migrated[_destination], "alredy migrated");
         _mint(_destination, _amount);
         migrated[_destination] = true;
     }
