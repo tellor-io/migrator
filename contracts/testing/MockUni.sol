@@ -26,6 +26,7 @@ contract MockUni is ERC20, IUniswapV2Pair {
     function getReserves()
         external
         view
+        override
         returns (
             uint112 _reserve0,
             uint112 _reserve1,
