@@ -184,8 +184,8 @@ contract Main {
      * @dev This function allows the admin to manually swap a group of users to the new token if their 
      *  tokens were stuck in a contract or contracts that held TRB in multiple contracts. The swap is based 
      *  prevous TRB balance. Both arrays have to be of the same length.
-     * @param _contract is an array of contract addresses 
-     * @param _owner is an array of the owners' addresses -- must be verified by the team
+     * @param _contracts is an array of contract addresses 
+     * @param _owners is an array of the owners' addresses -- must be verified by the team
      */ 
     function migrateFromBatch(
         address[] calldata _contracts,
@@ -207,8 +207,8 @@ contract Main {
      *  tokens were stuck in a contract or contracts that held TRB in multiple contracts. The swap is based 
      *  prevous custom TRB amount to compensate for other locked assets that cannot be recovered. 
      *  Both arrays have to be of the same length.
-     * @param _contract is an array of contract addresses 
-     * @param _owner is an array of the owners' addresses -- must be verified by the team
+     * @param _contracts is an array of contract addresses 
+     * @param _owners is an array of the owners' addresses -- must be verified by the team
      * @param _amounts is an array of the amount of TRB to swap
      */ 
     function migrateFromBatchCustom(
@@ -253,7 +253,7 @@ contract Main {
     /**
      * @dev This function allows the admin to run the migrate function for a group of users
      *   based on their old TRB balances
-     * @param _owner is an array of the address of the owners to swap to the new TRB
+     * @param _owners is an array of the address of the owners to swap to the new TRB
      */
     function migrateForBatch(address[] calldata _owners) external onlyAdmin {
         uint256[] memory _balances = new uint256[](_owners.length);
@@ -267,8 +267,8 @@ contract Main {
     /**
      * @dev This function allows the admin to run the migrate function for a user
      *   based on their a custom TRB balance to compensate for unrecoverable locked assets
-     * @param _owner an array of the addresses of the owners to swap to the new TRB
-     * @param _amount an array of the specfic amounts of TRB to swap for each user
+     * @param _owners an array of the addresses of the owners to swap to the new TRB
+     * @param _amounts an array of the specfic amounts of TRB to swap for each user
      */
     function migrateForBatchCustom(
         address[] calldata _owners,
@@ -283,7 +283,7 @@ contract Main {
     /**
      * @dev This is an internal function used by the migrate functions that helps to
      *  swap old trb tokens for new ones based on a custom amount
-     * @param _destination is the address that will receive tokens
+     * @param _owner is the address that will receive tokens
      * @param _amount is the amount to mint to the user
      * @param _bypass is true if the migrator contract needs to bypass the migrated = true flag
      *  for users that have already  migrated 
@@ -304,8 +304,8 @@ contract Main {
     /**
      * @dev This is an internal function used by the function migrate that helps to
      *  swap old trb tokens for new ones based on a custom amount
-     * @param _destination is the address that will receive tokens
-     * @param _amount is the amount to mint to the user
+     * @param _owners is the address that will receive tokens
+     * @param _amounts is the amount to mint to the user
      */
     function _migrateForBatch(
         address[] calldata _owners,
@@ -326,8 +326,8 @@ contract Main {
      * @dev This is an internal function used by the function migrate that helps to
      *  swap old trb tokens for new ones based on a custom amount and it allows
      *  the migrator contact to swap contract locked tokens even if the user has previosly migrated.
-     * @param _origin is the address of the user to migrate the balance from
-     * @param _destination is the address that will receive tokens
+     * @param _owner is the address of the user to migrate the balance from
+     * @param _dest is the address that will receive tokens
      * @param _amount is the amount to mint to the user
      * @param _bypass is a flag used by the migrator to allow it to bypass the "migrated = true" flag
      */
@@ -345,13 +345,11 @@ contract Main {
     }
 
     /**
-     * @dev This is an internal function used by the function migrate  that helps to
-     *  swap old trb tokens for new ones based on a custom amount and it allows
-     *  the migrator contact to swap contract locked tokens even if the user has previosly migrated.
-     * @param _origin is the address of the user to migrate the balance from
-     * @param _destination is the address that will receive tokens
-     * @param _amount is the amount to mint to the user
-     * @param _bypass is a flag used by the migrator to allow it to bypass the "migrated = true" flag
+     * @dev This is an internal function used by only the Migrator contract that helps to
+     *  swap old trb tokens for new ones based on a custom amounts
+     * @param _owners is the address of the user to migrate the balance from
+     * @param _dests is the address that will receive tokens
+     * @param _amounts is the amount to mint to the user
      */
     function _migrateFromBatch(
         address[] calldata _owners,
