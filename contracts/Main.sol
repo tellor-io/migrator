@@ -25,17 +25,22 @@ contract Main {
 
     Migrator public newTRBContract;
 
+    /**
+     * @param _newTRBContract is the address for the latest version of Tellor
+     */
     constructor(address _newTRBContract) {
         admin = MULTISIG_DEV_WALLET;
         // Not using the hardcoded address makes testing easier
         // newTRBContract = Migrator(0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0);
         newTRBContract = Migrator(_newTRBContract);
-
         oldTellorContract = ERC20(0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5);
-
         _addExchangePools();
     }
 
+    /**
+     * @dev This function adds the addresses of the uniswap and balancer pools to 
+     * swap
+     */
     function _addExchangePools() internal {
         pools[0x70258Aa9830C2C84d855Df1D61E12C256F6448b4] = new Uniswap(
             0x70258Aa9830C2C84d855Df1D61E12C256F6448b4,
@@ -86,8 +91,32 @@ contract Main {
             0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A,
             MULTISIG_DEV_WALLET
         );
-    }
 
+        // https://pools.balancer.exchange/#/pool/0xd386bb106E6FB44F91E180228EDECA24EF73C812/
+        pools[0xd386bb106E6FB44F91E180228EDECA24EF73C812] = new BPool(
+            0xd386bb106E6FB44F91E180228EDECA24EF73C812,
+            MULTISIG_DEV_WALLET
+        );
+
+        // https://pools.balancer.exchange/#/pool/0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E/
+        pools[0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E] = new BPool(
+            0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E,
+            MULTISIG_DEV_WALLET
+        );        
+
+        // https://pools.balancer.exchange/#/pool/0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6/
+        pools[0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6] = new BPool(
+            0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6,
+            MULTISIG_DEV_WALLET
+        );   
+
+    }
+     
+    /**
+     * @dev This function allows the migrator to migrate the uniswap pool. The address must 
+     *  have been added in the _addExchangePools() function
+     * @param poolAddr is the uniswap pool address specifed in the _addExchangePools() function
+     */ 
     //slither-disable-next-line unimplemented-functions
     function migratePool(address poolAddr) external {
         require(poolAddr == 0x70258Aa9830C2C84d855Df1D61E12C256F6448b4,"must be the uniswap pool");
@@ -97,6 +126,11 @@ contract Main {
         newTRBContract.migrateFor(msg.sender, balance, false);
     }
 
+    /**
+     * @dev This function allows the migrator to migrate the balancer pools. The addresses must 
+     *  have been added in the _addExchangePools() function
+     * @param poolAddr is the balancer pools addresses specifed in the _addExchangePools() function
+     */ 
     function migratePoolFor(address poolAddr,address _user) external onlyAdmin{
         uint256 balance = pools[poolAddr].trbBalanceOf(_user);
         require(balance > 0, "no balance to migrate");
@@ -104,13 +138,23 @@ contract Main {
         newTRBContract.migrateFor(_user, balance, false);
     }
 
-
+    /**
+     * @dev This getter function returns all the addresses associated with the speficied pool address
+     * @param poolAddr is the pool address 
+     */
     //slither-disable-next-line unimplemented-functions
     function getPool(address poolAddr) external view returns (address) {
         return address(pools[poolAddr]);
     }
 
     // Admin functions
+
+    /**
+     * @dev This function allows the admin to manually swap a user to the new token if their 
+     *  tokens were stuck in a contract
+     * @param _contract is the contract address 
+     * @param _owner is the owner's address -- must be verified by the team
+     */    
     //slither-disable-next-line unimplemented-functions
     function migrateFrom(address _contract, address _owner) external onlyAdmin {
         uint256 balance = oldTellorContract.balanceOf(_contract);
@@ -118,6 +162,14 @@ contract Main {
         _migrateFrom(_contract, _owner, balance, false);
     }
 
+    /**
+     * @dev This function allows the admin to manually swap a user to the new token if their 
+     *  tokens were stuck in a contract and bypass the migrated flag for addresses that held 
+     *  TRB in multiple contracts
+     * @param _contract is the contract address 
+     * @param _owner is the owner's address -- must be verified by the team
+     * @param _bypass is true for bypassing the migrated flag
+     */ 
     function migrateFromCustom(
         address _contract,
         address _owner,
@@ -128,6 +180,13 @@ contract Main {
         _migrateFrom(_contract, _owner, _amount, _bypass);
     }
 
+    /**
+     * @dev This function allows the admin to manually swap a group of users to the new token if their 
+     *  tokens were stuck in a contract or contracts that held TRB in multiple contracts. The swap is based 
+     *  prevous TRB balance. Both arrays have to be of the same length.
+     * @param _contracts is an array of contract addresses 
+     * @param _owners is an array of the owners' addresses -- must be verified by the team
+     */ 
     function migrateFromBatch(
         address[] calldata _contracts,
         address[] calldata _owners
@@ -143,6 +202,15 @@ contract Main {
         _migrateFromBatch(_contracts, _owners, _balances);
     }
 
+    /**
+     * @dev This function allows the admin to manually swap a group of users to the new token if their 
+     *  tokens were stuck in a contract or contracts that held TRB in multiple contracts. The swap is based 
+     *  prevous custom TRB amount to compensate for other locked assets that cannot be recovered. 
+     *  Both arrays have to be of the same length.
+     * @param _contracts is an array of contract addresses 
+     * @param _owners is an array of the owners' addresses -- must be verified by the team
+     * @param _amounts is an array of the amount of TRB to swap
+     */ 
     function migrateFromBatchCustom(
         address[] calldata _contracts,
         address[] calldata _owners,
@@ -156,12 +224,23 @@ contract Main {
         _migrateFromBatch(_contracts, _owners, _amounts);
     }
 
+    /**
+     * @dev This function allows the admin to run the migrate function for a user
+     *   based on their old TRB balance
+     * @param _owner the address of the owner to swap to the new TRB
+     */
     function migrateFor(address _owner) public onlyAdmin {
         uint256 _balance = oldTellorContract.balanceOf(_owner);
         require(_balance > 0, "no balance to migrate");
         _migrateFor(_owner, _balance, false);
     }
 
+    /**
+     * @dev This function allows the admin to run the migrate function for a user
+     *   based on their a custom TRB balance to compensate for unrecoverable locked assets
+     * @param _owner the address of the owner to swap to the new TRB
+     * @param _amount the specfic amount of TRB to swap
+     */
     function migrateForCustom(
         address _owner,
         uint256 _amount,
@@ -171,6 +250,11 @@ contract Main {
         _migrateFor(_owner, _amount, _bypass);
     }
 
+    /**
+     * @dev This function allows the admin to run the migrate function for a group of users
+     *   based on their old TRB balances
+     * @param _owners is an array of the address of the owners to swap to the new TRB
+     */
     function migrateForBatch(address[] calldata _owners) external onlyAdmin {
         uint256[] memory _balances = new uint256[](_owners.length);
         for (uint256 index = 0; index < _owners.length; index++) {
@@ -179,6 +263,13 @@ contract Main {
         _migrateForBatch(_owners, _balances);
     }
 
+
+    /**
+     * @dev This function allows the admin to run the migrate function for a user
+     *   based on their a custom TRB balance to compensate for unrecoverable locked assets
+     * @param _owners an array of the addresses of the owners to swap to the new TRB
+     * @param _amounts an array of the specfic amounts of TRB to swap for each user
+     */
     function migrateForBatchCustom(
         address[] calldata _owners,
         uint256[] calldata _amounts
@@ -188,6 +279,15 @@ contract Main {
     }
 
     // Internal Functions
+
+    /**
+     * @dev This is an internal function used by the migrate functions that helps to
+     *  swap old trb tokens for new ones based on a custom amount
+     * @param _owner is the address that will receive tokens
+     * @param _amount is the amount to mint to the user
+     * @param _bypass is true if the migrator contract needs to bypass the migrated = true flag
+     *  for users that have already  migrated 
+     */    
     function _migrateFor(
         address _owner,
         uint256 _amount,
@@ -200,6 +300,13 @@ contract Main {
         newTRBContract.migrateFor(_owner, _amount, _bypass);
     }
 
+
+    /**
+     * @dev This is an internal function used by the function migrate that helps to
+     *  swap old trb tokens for new ones based on a custom amount
+     * @param _owners is the address that will receive tokens
+     * @param _amounts is the amount to mint to the user
+     */
     function _migrateForBatch(
         address[] calldata _owners,
         uint256[] memory _amounts
@@ -215,6 +322,15 @@ contract Main {
         newTRBContract.migrateForBatch(_owners, _amounts);
     }
 
+    /**
+     * @dev This is an internal function used by the function migrate that helps to
+     *  swap old trb tokens for new ones based on a custom amount and it allows
+     *  the migrator contact to swap contract locked tokens even if the user has previosly migrated.
+     * @param _owner is the address of the user to migrate the balance from
+     * @param _dest is the address that will receive tokens
+     * @param _amount is the amount to mint to the user
+     * @param _bypass is a flag used by the migrator to allow it to bypass the "migrated = true" flag
+     */
     function _migrateFrom(
         address _owner,
         address _dest,
@@ -228,6 +344,13 @@ contract Main {
         newTRBContract.migrateFrom(_owner, _dest, _amount, _bypass);
     }
 
+    /**
+     * @dev This is an internal function used by only the Migrator contract that helps to
+     *  swap old trb tokens for new ones based on a custom amounts
+     * @param _owners is the address of the user to migrate the balance from
+     * @param _dests is the address that will receive tokens
+     * @param _amounts is the amount to mint to the user
+     */
     function _migrateFromBatch(
         address[] calldata _owners,
         address[] calldata _dests,
@@ -243,6 +366,12 @@ contract Main {
         newTRBContract.migrateFromBatch(_owners, _dests, _amounts);
     }
 
+    /**
+     * @dev This is a getter function taht returns the holder address for the specifed pool
+     * @param poolAddr the pool adress
+     * @param holder is the user address to get their balance in the pool
+     * @return uint256 of the users balance
+     */
     function trbBalanceOf(address poolAddr, address holder)
         external
         view
@@ -252,11 +381,18 @@ contract Main {
         return totalBalance;
     }
 
+    /**
+     * @dev Modifier for onlyAdmin functions
+     */
     modifier onlyAdmin {
         require(msg.sender == admin, "only admin can call this function.");
         _;
     }
 
+    /**
+     * @dev Allows the owner to change the admin
+     * @param _admin is the new admin address
+     */
     function setAdmin(address _admin) external onlyAdmin {
         require(
             _admin != address(0),
