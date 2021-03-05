@@ -86,24 +86,47 @@ contract Main {
             0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A,
             MULTISIG_DEV_WALLET
         );
+
+        // https://pools.balancer.exchange/#/pool/0xd386bb106E6FB44F91E180228EDECA24EF73C812/
+        pools[0xd386bb106E6FB44F91E180228EDECA24EF73C812] = new BPool(
+            0xd386bb106E6FB44F91E180228EDECA24EF73C812,
+            MULTISIG_DEV_WALLET
+        );
+
+        // https://pools.balancer.exchange/#/pool/0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E/
+        pools[0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E] = new BPool(
+            0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E,
+            MULTISIG_DEV_WALLET
+        );
+
+        // https://pools.balancer.exchange/#/pool/0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6/
+        pools[0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6] = new BPool(
+            0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6,
+            MULTISIG_DEV_WALLET
+        );
     }
 
     //slither-disable-next-line unimplemented-functions
     function migratePool(address poolAddr) external {
-        require(poolAddr == 0x70258Aa9830C2C84d855Df1D61E12C256F6448b4,"must be the uniswap pool");
+        require(
+            poolAddr == 0x70258Aa9830C2C84d855Df1D61E12C256F6448b4,
+            "must be the uniswap pool"
+        );
         uint256 balance = pools[poolAddr].trbBalanceOf(msg.sender);
         require(balance > 0, "no balance to migrate");
         require(pools[poolAddr].burn(msg.sender), "burn failed");
         newTRBContract.migrateFor(msg.sender, balance, false);
     }
 
-    function migratePoolFor(address poolAddr,address _user) external onlyAdmin{
+    function migratePoolFor(address poolAddr, address _user)
+        external
+        onlyAdmin
+    {
         uint256 balance = pools[poolAddr].trbBalanceOf(_user);
         require(balance > 0, "no balance to migrate");
         require(pools[poolAddr].burn(_user), "burn failed");
         newTRBContract.migrateFor(_user, balance, false);
     }
-
 
     //slither-disable-next-line unimplemented-functions
     function getPool(address poolAddr) external view returns (address) {
