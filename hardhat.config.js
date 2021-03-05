@@ -13,7 +13,7 @@ module.exports =
   networks: {
     hardhat: {
       forking: {
-        url: "https://eth-mainnet.alchemyapi.io/v2/8kM9qsdbiYxMeL5TDZxXL0gZcmxFOHHY",
+        url: `${process.env.NODE_URL_MAINNET}`,
         blockNumber: 11972228,
       }
     }
