@@ -23,7 +23,7 @@ contract Uniswap is DSMath, TRBBalancer {
 
     // solhint-disable-next-line
     function trbBalanceOf(
-        address, /**pool**/
+        address, /* _x */
         address holder
     ) external view override returns (uint256) {
         uint256 userBalance = pair.balanceOf(holder);
@@ -41,9 +41,8 @@ contract Uniswap is DSMath, TRBBalancer {
         return trbAddrBalance;
     }
 
-    // solhint-disable-next-line
     function burn(
-        address, /**pool**/
+        address, /* _x */
         address holder
     ) external override returns (bool) {
         uint256 balance = pair.balanceOf(holder);
