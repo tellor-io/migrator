@@ -65,7 +65,7 @@ module.exports =
       }
     },
     rinkeby: {
-        url: "https://mainnet.infura.io/v3/63ab6bb8ae4a4eedb2a55812e0a615a0",
+        url: `${process.env.NODE_URL_RINKEBY}`,
         accounts: [process.env.PRIVATE_KEY],
         gas: 10000000 ,
         gasPrice: 20000000000
