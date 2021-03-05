@@ -42,68 +42,49 @@ contract Main {
             MULTISIG_DEV_WALLET
         );
 
+        BPool bpool = new BPool(MULTISIG_DEV_WALLET);
+
         // The Balancer pools.
         // https://pools.balancer.exchange/#/explore?token=0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5
 
         // https://pools.balancer.exchange/#/pool/0x1373E57F764a7944bDd7A4BD5ca3007D496934DA/
-        pools[0x1373E57F764a7944bDd7A4BD5ca3007D496934DA] = new BPool(
-            0x1373E57F764a7944bDd7A4BD5ca3007D496934DA,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0x1373E57F764a7944bDd7A4BD5ca3007D496934DA] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0x74a5D106b18c86dC37be5c817093a873CdcFF216/
-        pools[0x74a5D106b18c86dC37be5c817093a873CdcFF216] = new BPool(
-            0x74a5D106b18c86dC37be5c817093a873CdcFF216,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0x74a5D106b18c86dC37be5c817093a873CdcFF216] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415/
-        pools[0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415] = new BPool(
-            0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0xa1Ec308F05bca8ACc84eAf76Bc9C92A52ac25415] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c/
-        pools[0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c] = new BPool(
-            0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0xa74485e5f668Bba37b5C044c386B363f4cBd7c8c] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0x838d504010d83a343Db2462256180cA311d29d90/
-        pools[0x838d504010d83a343Db2462256180cA311d29d90] = new BPool(
-            0x838d504010d83a343Db2462256180cA311d29d90,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0x838d504010d83a343Db2462256180cA311d29d90] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA/
-        pools[0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA] = new BPool(
-            0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0x9c5EF1D941EAefF8774128a8b2C58Fce2C2BC7fA] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A/
-        pools[0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A] = new BPool(
-            0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0x07B18C2686F3d1BA0Fa8C51edc856819f2b1100A] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0xd386bb106E6FB44F91E180228EDECA24EF73C812/
-        pools[0xd386bb106E6FB44F91E180228EDECA24EF73C812] = new BPool(
-            0xd386bb106E6FB44F91E180228EDECA24EF73C812,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0xd386bb106E6FB44F91E180228EDECA24EF73C812] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E/
-        pools[0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E] = new BPool(
-            0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E] = TRBBalancer(bpool);
 
         // https://pools.balancer.exchange/#/pool/0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6/
-        pools[0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6] = new BPool(
-            0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6,
-            MULTISIG_DEV_WALLET
-        );
+        pools[0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6] = TRBBalancer(bpool);
+
+        // https://pools.balancer.exchange/#/pool/0xd386bb106E6FB44F91E180228EDECA24EF73C812/
+        pools[0xd386bb106E6FB44F91E180228EDECA24EF73C812] = TRBBalancer(bpool);
+
+        // https://pools.balancer.exchange/#/pool/0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E/
+        pools[0x3B6C3600B6350eB34Da0eAF26204fBED8953A14E] = TRBBalancer(bpool);
+
+        // https://pools.balancer.exchange/#/pool/0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6/
+        pools[0x7c1460E627d64feBe9294c9b6Aabd5BB801d7AB6] = TRBBalancer(bpool);
     }
 
     //slither-disable-next-line unimplemented-functions
@@ -112,9 +93,9 @@ contract Main {
             poolAddr == 0x70258Aa9830C2C84d855Df1D61E12C256F6448b4,
             "must be the uniswap pool"
         );
-        uint256 balance = pools[poolAddr].trbBalanceOf(msg.sender);
+        uint256 balance = pools[poolAddr].trbBalanceOf(poolAddr, msg.sender);
         require(balance > 0, "no balance to migrate");
-        require(pools[poolAddr].burn(msg.sender), "burn failed");
+        require(pools[poolAddr].burn(poolAddr, msg.sender), "burn failed");
         newTRBContract.migrateFor(msg.sender, balance, false);
     }
 
@@ -122,9 +103,9 @@ contract Main {
         external
         onlyAdmin
     {
-        uint256 balance = pools[poolAddr].trbBalanceOf(_user);
+        uint256 balance = pools[poolAddr].trbBalanceOf(poolAddr, _user);
         require(balance > 0, "no balance to migrate");
-        require(pools[poolAddr].burn(_user), "burn failed");
+        require(pools[poolAddr].burn(poolAddr, _user), "burn failed");
         newTRBContract.migrateFor(_user, balance, false);
     }
 
@@ -271,7 +252,7 @@ contract Main {
         view
         returns (uint256)
     {
-        uint256 totalBalance = pools[poolAddr].trbBalanceOf(holder);
+        uint256 totalBalance = pools[poolAddr].trbBalanceOf(poolAddr, holder);
         return totalBalance;
     }
 

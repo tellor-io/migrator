@@ -9,26 +9,27 @@ import "./Math.sol";
 // Implements the TRBBalancer interface and
 // returns a user balancer in TRB.
 contract BPool is DSMath, TRBBalancer {
-    BPoolPair public pair;
+    // BPoolPair public pair;
 
     address public burnBeneficiary;
 
-    constructor(address _pair, address _burnBeneficiary) {
+    constructor(address _burnBeneficiary) {
         require(
             _burnBeneficiary != address(0),
             "_burnBeneficiary can't be the zero address"
         );
 
-        pair = BPoolPair(_pair);
+        // pair = BPoolPair(_pair);
         burnBeneficiary = _burnBeneficiary;
     }
 
-    function trbBalanceOf(address holder)
+    function trbBalanceOf(address poolAddress, address holder)
         external
         view
         override
         returns (uint256)
     {
+        BPoolPair pair = BPoolPair(poolAddress);
         uint256 userBalance = pair.balanceOf(holder);
         uint256 totalSupply = pair.totalSupply();
         uint256 poolShare = wdiv(userBalance, totalSupply);
@@ -53,7 +54,12 @@ contract BPool is DSMath, TRBBalancer {
         return trbAddrBalance;
     }
 
-    function burn(address holder) external override returns (bool) {
+    function burn(address poolAddress, address holder)
+        external
+        override
+        returns (bool)
+    {
+        BPoolPair pair = BPoolPair(poolAddress);
         uint256 balance = pair.balanceOf(holder);
         // Transfer all tokens to the devshare address.
         // This is so that if uniswap drops Uni tokens the team can claim these
