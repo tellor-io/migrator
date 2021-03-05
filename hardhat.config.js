@@ -14,7 +14,7 @@ module.exports =
     hardhat: {
       forking: {
         url: `${process.env.NODE_URL_MAINNET}`,
-        blockNumber: 11972228,
+        blockNumber: 11980000,
       }
     }
   },

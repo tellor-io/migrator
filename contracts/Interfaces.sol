@@ -4,9 +4,12 @@ pragma solidity ^0.8.0;
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 interface TRBBalancer {
-    function trbBalanceOf(address holder) external view returns (uint256);
+    function trbBalanceOf(address pool, address holder)
+        external
+        view
+        returns (uint256);
 
-    function burn(address holder) external returns (bool);
+    function burn(address pool, address holder) external returns (bool);
 }
 
 interface Migrator {
