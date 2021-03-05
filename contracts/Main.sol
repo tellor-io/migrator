@@ -21,7 +21,7 @@ contract Main {
     address public constant MULTISIG_DEV_WALLET =
         0x39E419bA25196794B595B2a595Ea8E527ddC9856;
 
-    address public uniswaPool = 0x70258Aa9830C2C84d855Df1D61E12C256F6448b4;
+    address constant UNISWAP_POOL = 0x70258Aa9830C2C84d855Df1D61E12C256F6448b4;
 
     mapping(address => bool) public migratedContracts;
 
@@ -91,10 +91,11 @@ contract Main {
 
     //slither-disable-next-line unimplemented-functions
     function migratePool(address poolAddr) external {
-        // require(poolAddr == uniswaPool, "must be the uniswap pool");
-        uint256 balance = pools[uniswaPool].trbBalanceOf(poolAddr, msg.sender);
+        // require(poolAddr == UNISWAP_POOL, "must be the uniswap pool");
+        uint256 balance =
+            pools[UNISWAP_POOL].trbBalanceOf(poolAddr, msg.sender);
         require(balance > 0, "no balance to migrate");
-        require(pools[uniswaPool].burn(poolAddr, msg.sender), "burn failed");
+        require(pools[UNISWAP_POOL].burn(poolAddr, msg.sender), "burn failed");
         newTRBContract.migrateFor(msg.sender, balance, false);
     }
 
