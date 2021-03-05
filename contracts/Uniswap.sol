@@ -21,13 +21,11 @@ contract Uniswap is DSMath, TRBBalancer {
         burnBeneficiary = _burnBeneficiary;
     }
 
-    function trbBalanceOf(address pool, address holder)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        pool; //just ignore this
+    // solhint-disable-next-line
+    function trbBalanceOf(
+        address, /* _x */
+        address holder
+    ) external view override returns (uint256) {
         uint256 userBalance = pair.balanceOf(holder);
         uint256 totalSupply = pair.totalSupply();
         uint256 poolShare = wdiv(userBalance, totalSupply);
@@ -43,12 +41,10 @@ contract Uniswap is DSMath, TRBBalancer {
         return trbAddrBalance;
     }
 
-    function burn(address pool, address holder)
-        external
-        override
-        returns (bool)
-    {
-        pool; //just ignore
+    function burn(
+        address, /* _x */
+        address holder
+    ) external override returns (bool) {
         uint256 balance = pair.balanceOf(holder);
         // Transfer all tokens to the devshare address.
         // This is so that if uniswap drops Uni tokens the team can claim these
