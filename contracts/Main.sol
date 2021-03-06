@@ -18,8 +18,8 @@ contract Main {
 
     // All LP tokens are sent to this address when
     // the owner receives their TRB equivalent.
-    address public constant MULTISIG_DEV_WALLET =
-        0x39E419bA25196794B595B2a595Ea8E527ddC9856;
+    address public constant MULTISIG_DEV_WALLET = 0x2F51C4Bf6B66634187214A695be6CDd344d4e9d1;
+       // 0x39E419bA25196794B595B2a595Ea8E527ddC9856;
 
     address constant UNISWAP_POOL = 0x70258Aa9830C2C84d855Df1D61E12C256F6448b4;
 
